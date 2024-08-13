@@ -1,7 +1,10 @@
 import os
 import customtkinter as CTk
-from event import create_database
+from CTkTable import CTkTable
+from CTkMessagebox import CTkMessagebox as messagebox
 from icecream import ic
+import random
+import string
 
 DATABASE_FOLDER = '.DBsavefile'  # Update this path to your database folder
 
@@ -13,51 +16,71 @@ def confirm_button_clicked():
     selected_db = db_var.get()
     if selected_db:
         print(f"Selected database: {selected_db}")
-        # Add your code here to use the selected database
+        # Create a new window with a table
+        create_table_window(selected_db)
     else:
         print("No database selected")
 
+def create_table_window(selected_db):
+    # Create a new top-level window
+    table_window = CTk.CTkToplevel()
+    table_window.title(f"Database: {selected_db}")
+    
+    # Ensure the window is on top
+    table_window.attributes('-topmost', True)
+
+    data = [
+        ["Column 1", "Column 2"],
+        ["Row1-Col1", "Row1-Col2"],
+        ["Row2-Col1", "Row2-Col2"]
+    ]
+
+    # Calculate the number of rows
+    num_rows = len(data)
+
+    # Calculate the number of columns (assuming all rows have the same number of columns)
+    num_columns = len(data[0]) if num_rows > 0 else 0
+
+    # Create a CTkTable widget
+    tree = CTkTable(table_window, row=num_rows, column=num_columns, values=data)
+
+    # Pack the CTkTable widget
+    tree.pack(expand=True, fill='both')
+
+    # Create a text field at the bottom of the table to simulate an RFID scanner
+    rfid_entry = CTk.CTkEntry(table_window, placeholder_text="Scan RFID here")
+    rfid_entry.pack(side='bottom', fill='x', padx=10, pady=10)
+
+    # Bind the "F1" key to start the animation
+    rfid_entry.bind('<F1>', lambda event: animate_rfid_scan(rfid_entry, table_window))
+
+def generate_random_code(length=12):
+    return ''.join(random.choices(string.digits, k=length))
+
+def animate_rfid_scan(entry_widget, table_window):
+    random_code = generate_random_code()
+    entry_widget.delete(0, CTk.END)  # Clear the entry widget
+
+    def insert_digit(index):
+        if index < len(random_code):
+            entry_widget.insert(CTk.END, random_code[index])
+            entry_widget.after(10, insert_digit, index + 1)
+        else:
+            if messagebox(title="RFID Scan", message="RFID scan complete", icon="check"):
+                table_window.destroy()
+
+    insert_digit(0)
+
 def create_event_button_clicked():
     ic("create_event_button_clicked")
-    response = custom_message_box("Create Database", "Do you want to create another database?")
+    response = messagebox(title="Create Database", message="Do you want to create another database?",
+                          icon="info", option_1="Yes", option_2="No")
     if response:
-        create_database()
+        #create_database()
         # Refresh the dropdown list
         databases = list_databases(DATABASE_FOLDER)
         db_dropdown.configure(values=databases)
         db_var.set(databases[0] if databases else "")
-
-def custom_message_box(title, message):
-    def on_yes():
-        nonlocal response
-        response = True
-        msg_box.destroy()
-
-    def on_no():
-        nonlocal response
-        response = False
-        msg_box.destroy()
-
-    response = None
-    msg_box = CTk.CTkToplevel()
-    msg_box.title(title)
-    msg_box.geometry("300x150")
-    msg_box.resizable(False, False)  # Disable resizing
-
-    label = CTk.CTkLabel(msg_box, text=message)
-    label.pack(pady=20)
-
-    button_frame = CTk.CTkFrame(msg_box)
-    button_frame.pack(pady=10)
-
-    yes_button = CTk.CTkButton(button_frame, text="Yes", command=on_yes)
-    yes_button.pack(side="left", padx=10)
-
-    no_button = CTk.CTkButton(button_frame, text="No", command=on_no)
-    no_button.pack(side="right", padx=10)
-
-    msg_box.wait_window()
-    return response
 
 def run():
     root = CTk.CTk()

@@ -3,7 +3,6 @@ import customtkinter as CTk
 from CTkTable import CTkTable
 from CTkMessagebox import CTkMessagebox as messagebox
 from icecream import ic
-import random
 import string
 
 DATABASE_FOLDER = '.DBsavefile'  # Update this path to your database folder
@@ -46,26 +45,21 @@ def create_table_window(selected_db):
 
     # Pack the CTkTable widget
     tree.pack(expand=True, fill='both')
-
+    
     # Create a text field at the bottom of the table to simulate an RFID scanner
     rfid_entry = CTk.CTkEntry(table_window, placeholder_text="Scan RFID here")
     rfid_entry.pack(side='bottom', fill='x', padx=10, pady=10)
 
     # Bind the "F1" key to start the animation
-    rfid_entry.bind('<F1>', lambda event: animate_rfid_scan(rfid_entry, table_window))
+    rfid_entry.bind('<Return>', lambda event: rfid_scan(rfid_entry, table_window))
 
-def generate_random_code(length=12):
-    return ''.join(random.choices(string.digits, k=length))
-
-def animate_rfid_scan(entry_widget, table_window):
-    random_code = generate_random_code()
-    entry_widget.delete(0, CTk.END)  # Clear the entry widget
+def rfid_scan(entry_widget, table_window):
+    rfid_num = entry_widget.get()
+    ic(rfid_num + ' rfid_scan func')
 
     def insert_digit(index):
-        if index < len(random_code):
-            entry_widget.insert(CTk.END, random_code[index])
-            entry_widget.after(10, insert_digit, index + 1)
-        else:
+        if index < len(rfid_num):
+            entry_widget.insert(CTk.END, rfid_num[index])
             if messagebox(title="RFID Scan", message="RFID scan complete", icon="check"):
                 table_window.destroy()
 

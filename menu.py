@@ -1,11 +1,14 @@
 import os
 import customtkinter as CTk
 from CTkTable import CTkTable
+import pandas as pd
+from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
 from icecream import ic
 import string
 from dbActions import DBActions
 from creds import Credentials
+import time
 
 def list_tables(selected_table):
     # Check all tables in the database
@@ -18,25 +21,32 @@ def list_tables(selected_table):
 def confirm_button_clicked(table_var):
     ic("confirm_button_clicked")
     selected_table = table_var.get()
-    if selected_table:
+    if not selected_table:
+        CTkMessagebox(title="Warning", message="No table selected", icon="warning")
+    elif selected_table == "Select a table":
+        CTkMessagebox(title="Warning", message="Please select a table", icon="warning")
+    elif selected_table == "Members":
+        CTkMessagebox(title="Warning", message="The 'Members' table cannot be selected", icon="warning")
+    else:
         print(f"Selected table: {selected_table}")
         # Create a new window with a table
         create_table_window(selected_table)
-    else:
-        print("No table selected")
 
 def create_table_window(selected_table):
     # Create a new top-level window
     table_window = CTk.CTkToplevel()
     table_window.title(f"Event: {selected_table}")
-    table_window.geometry('500x500')  # Set fixed window size
+    table_window.geometry('600x600')  # Set fixed window size
 
     # Ensure the window is on top
     table_window.attributes('-topmost', True)
 
     def search_table(event):
-        query = search_entry.get().lower()
-        filtered_data = [row for row in data if any(query in str(cell).lower() for cell in row.values() if isinstance(row, dict)) or any(query in str(cell).lower() for cell in row)]
+        query = search_entry.get()
+        if query == "":
+            filtered_data = data  # Display all data if the search query is empty
+        else:
+            filtered_data = [row for row in data if any(query in str(cell) for cell in row.values() if isinstance(row, dict)) or any(query in str(cell) for cell in row)]
         display_data(filtered_data)
 
     # Create a search text box at the top of the table
@@ -64,7 +74,7 @@ def create_table_window(selected_table):
 
         # Create additional widgets if needed
         while len(existing_widgets) < num_cells_needed:
-            cell = CTk.CTkLabel(scrollable_frame, text="", corner_radius=0)
+            cell = CTk.CTkLabel(scrollable_frame, text="", corner_radius=0, width=50)
             existing_widgets.append(cell)
 
         # Update the text of existing widgets and grid them
@@ -83,7 +93,7 @@ def create_table_window(selected_table):
         # Hide any extra widgets
         for k in range(widget_index, len(existing_widgets)):
             existing_widgets[k].grid_forget()
-            
+
     # Display the initial data
     display_data(data)
 
@@ -93,30 +103,74 @@ def create_table_window(selected_table):
     rfid_entry.pack(padx=10, pady=10, fill='x')
 
     # Bind the <Return> key event to the rfid_scan_event function
-    rfid_entry.bind('<Return>', lambda event: rfid_scan_event(rfid_entry, table_window, selected_table))
-    return
+    rfid_entry.bind('<Return>', lambda event: rfid_scan_event(rfid_entry, table_window, selected_table, display_data, data))
 
-def rfid_scan_event(entry_widget, table_window, selected_table):
+    def export_to_file():
+        # Ask the user for the file type and location
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+        if not file_path:
+            return
+
+        # Convert the data to a DataFrame
+
+        df = pd.DataFrame(DBActions.fetch_table_data(selected_table))
+
+        # Save the DataFrame to the selected file type
+        if file_path.endswith('.csv'):
+            df.to_csv(file_path, index=False)
+        elif file_path.endswith('.xlsx'):
+            df.to_excel(file_path, index=False)
+
+    # Create the export button
+    export_button = CTk.CTkButton(table_window, text="Export", command=export_to_file)
+    export_button.pack(side='top', anchor='ne', padx=10, pady=10)
+
+rfid_cache = {}
+
+def rfid_scan_event(entry_widget, table_window, selected_table, display_data, data):
     rfid_num = entry_widget.get()
     ic(rfid_num + ' rfid_scan func')
 
+    current_time = time.time()
+    # Check if the RFID number is in the cache and if the scan was made within the last 5 seconds
+    if rfid_num in rfid_cache:
+        last_scan_time = rfid_cache[rfid_num]
+        if current_time - last_scan_time < 15:
+            messagebox1 = CTkMessagebox(title="RFID Scan", message=f"{rfid_num} was scanned within the last 15 seconds. Ignoring scan...", icon="warning")
+            table_window.after(4500, messagebox1.destroy)  # Close the message box after 5 second
+            return
+
     def insert_digit(index):
         if index < len(rfid_num):
+            # Check if rfid_num exists in the database using member_exists function
+            if not DBActions.member_exists(rfid_num):
+                messagebox2 = CTkMessagebox(title="RFID Scan Error", message="RFID number not found", icon="cancel")
+                table_window.after(1000, messagebox2.destroy)  # Close the message box after 1 second
+                entry_widget.delete(0, CTk.END)
+                return
+            
             entry_widget.insert(CTk.END, rfid_num[index])
             DBActions.attendance_member_event(selected_table, rfid_num)  # Call the attendance_member_event function
-            refresh_window()
-            messagebox = CTkMessagebox(title="RFID Scan", message="Attendance recorded", icon="check")
-            table_window.after(1000, messagebox.destroy)  # Close the message box after 1 second
+            refresh_data()
+            messagebox2 = CTkMessagebox(title="RFID Scan", message="RFID recorded", icon="check")
+            table_window.after(1000, messagebox2.destroy)  # Close the message box after 1 second
+            entry_widget.delete(0, CTk.END)
 
-    def refresh_window():
-        table_window.destroy()
-        create_table_window(selected_table)
+    def refresh_data():
+        # Fetch the updated data
+        updated_data = DBActions.fetch_table_data(selected_table)
+        # Update the displayed data
+        display_data(updated_data)
+
+    # Update the cache with the current timestamp
+    rfid_cache[rfid_num] = current_time
 
     insert_digit(0)
 
-def rfid_scan_register(entry_widget, name, program, year, table_window):
+def rfid_scan_register(entry_widget, name, student_num, program, year, table_window):
     rfid_num = entry_widget.get()
     member_name = name.get()
+    member_student_num = student_num.get()
     member_program = program.get()
     member_year = year.get()
     ic(rfid_num, member_name, member_program, member_year)
@@ -126,7 +180,7 @@ def rfid_scan_register(entry_widget, name, program, year, table_window):
         CTkMessagebox(title="Member Register", message="Member already exists!", icon="error")
     else:
         # Register the new member
-        DBActions.member_register(rfid_num, member_name, member_program, member_year)
+        DBActions.member_register(rfid_num, member_name, member_student_num, member_program, member_year)
         if CTkMessagebox(title="Member Register", message="Member Registered!", icon="check"):
             table_window.after(300, table_window.destroy())
 
@@ -163,6 +217,9 @@ def register_member_button_clicked():
     name_entry = CTk.CTkEntry(register_window, placeholder_text="Enter name")
     name_entry.pack(pady=5)
 
+    student_num_entry = CTk.CTkEntry(register_window, placeholder_text="Enter student number")
+    student_num_entry.pack(pady=5)
+
     program_entry = CTk.CTkEntry(register_window, placeholder_text="Enter program")
     program_entry.pack(pady=5)
 
@@ -173,7 +230,7 @@ def register_member_button_clicked():
     rfid_entry.pack(pady=5)
 
     # Bind the "Enter" key to Register
-    rfid_entry.bind('<Return>', lambda event: rfid_scan_register(rfid_entry, name_entry, program_entry, year_entry, register_window))
+    rfid_entry.bind('<Return>', lambda event: rfid_scan_register(rfid_entry, name_entry, student_num_entry, program_entry, year_entry, register_window))
     # Create and place a button to submit the form
     # submit_button = CTk.CTkButton(register_window, text="Submit", command=lambda: submit_form(name_entry, program_entry, year_entry))
     # submit_button.pack(pady=5)
@@ -212,11 +269,14 @@ confirm_button.pack(pady=20)
 create_event_button = CTk.CTkButton(root, text="Create Event", command=create_event_button_clicked)
 create_event_button.pack(pady=20)
 
+show_memmbers_button = CTk.CTkButton(root, text="Show Members", command=lambda: create_table_window("Members"))
+show_memmbers_button.pack(pady=20)
+
 register_member_button = CTk.CTkButton(root, text="Register Member", command=register_member_button_clicked)
 register_member_button.pack(pady=20)
 
-# Create and place refresh button
-refresh_button = CTk.CTkButton(root, text="Refresh", command=lambda: update_tables_dropdown(table_dropdown))
-refresh_button.pack(pady=20)
+# # Create and place refresh button
+# refresh_button = CTk.CTkButton(root, text="Refresh", command=lambda: update_tables_dropdown())
+# refresh_button.pack(pady=20)
 
 root.mainloop()

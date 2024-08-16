@@ -3,17 +3,20 @@ from dbcloud import Database
 from icecream import ic
 
 class DBActions:
-
     @staticmethod
-    def member_register(memberid, name, program, year):
+    def member_register(memberid, name, student_num, program, year):
         created_on = datetime.datetime.now()
         try:
             with Database.get_db_connection() as conn:
                 with conn.cursor() as cursor:
-                    sql = """INSERT INTO Members (memberid, name, program, year, date_registered) VALUES (%s, %s, %s, %s, %s)"""
-                    cursor.execute(sql, (memberid, name, program, year, created_on.strftime('%Y-%m-%d')))
+                    sql = """INSERT INTO Members (memberid, name, student_num, program, year, date_registered) 
+                             VALUES (%s, %s, %s, %s, %s, %s)"""
+                    cursor.execute(sql, (memberid, name, student_num, program, year, created_on.strftime('%Y-%m-%d')))
                     conn.commit()
             return 0
+        except pymysql.ProgrammingError as e:
+            ic(e)  # Debugging line to print the exception
+            return -1
         except Exception as e:
             ic(e)  # Debugging line to print the exception
             return -1
@@ -50,9 +53,11 @@ class DBActions:
         try:
             with Database.get_db_connection() as conn:
                 with conn.cursor() as cursor:
+                    # Create the table
                     sql = f"""CREATE TABLE `{table_name}` (
                                 id INT auto_increment NOT NULL,
                                 memberid INT NOT NULL,
+                                student_num INT NOT NULL,
                                 name VARCHAR(255) NOT NULL,
                                 attendance_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                 CONSTRAINT {table_name}_PK PRIMARY KEY (id),
@@ -79,14 +84,14 @@ class DBActions:
     @staticmethod
     def attendance_member_event(table_name, memberid):
         try:
-            name = DBActions.get_member_name(memberid)
+            name = DBActions.member_exists(memberid)['name']
+            student_num = DBActions.member_exists(memberid)['student_num']
             if not name:
                 raise ValueError(f"No member found with memberid: {memberid}")
-            
             with Database.get_db_connection() as conn:
                 with conn.cursor() as cursor:
-                    sql = f"INSERT INTO {table_name} (memberid, name) VALUES (%s, %s)"
-                    cursor.execute(sql, (memberid, name))
+                    sql = f"INSERT INTO {table_name} (memberid, name, student_num) VALUES (%s, %s, %s)"
+                    cursor.execute(sql, (memberid, name, student_num))
                     conn.commit()
             return 0
         except Exception as e:

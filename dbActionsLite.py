@@ -1,6 +1,7 @@
 import datetime
 import sqlite3
 from icecream import ic
+from dblite import Database as DBActionsLite
 
 class DBActions:
     @staticmethod
@@ -9,6 +10,8 @@ class DBActions:
         try:
             conn = DBActionsLite.get_db_connection()
             cursor = conn.cursor()
+            # Create the table if it doesn't exist
+            cursor.execute("CREATE TABLE IF NOT EXISTS Members (id INTEGER PRIMARY KEY AUTOINCREMENT, memberid INTEGER PRIMARY KEY, name TEXT, student_num INTEGER, program TEXT, year TEXT, date_registered TEXT)")
             sql = """INSERT INTO Members (memberid, name, student_num, program, year, date_registered) 
                      VALUES (?, ?, ?, ?, ?, ?)"""
             cursor.execute(sql, (memberid, name, student_num, program, year, created_on.strftime('%Y-%m-%d')))

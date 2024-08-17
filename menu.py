@@ -167,12 +167,12 @@ def rfid_scan_event(entry_widget, table_window, selected_table, display_data, da
 
     insert_digit(0)
 
-def rfid_scan_register(entry_widget, name, student_num, program, year, table_window):
-    rfid_num = entry_widget.get()
-    member_name = name.get()
-    member_student_num = student_num.get()
-    member_program = program.get()
-    member_year = year.get()
+def rfid_scan_register(entries, table_window):
+    rfid_num = entries['rfid_entry'].get()
+    member_name = entries['name_entry'].get()
+    member_student_num = entries['student_num_entry'].get()
+    member_program = entries['program_entry'].get()
+    member_year = entries['year_entry'].get()
     ic(rfid_num, member_name, member_program, member_year)
 
     # Check if the member already exists
@@ -182,7 +182,9 @@ def rfid_scan_register(entry_widget, name, student_num, program, year, table_win
         # Register the new member
         DBActions.member_register(rfid_num, member_name, member_student_num, member_program, member_year)
         if CTkMessagebox(title="Member Register", message="Member Registered!", icon="check"):
-            table_window.after(300, table_window.destroy())
+            for entry in entries.values():
+                entry.delete(0, CTk.END)
+            table_window.after(300)
 
 def create_event_button_clicked():
     ic("create_event_button_clicked")
@@ -213,27 +215,31 @@ def register_member_button_clicked():
     register_window.resizable(False, False)  # Disable resizing
     center_window(register_window)
 
+    entries = {}
+    ic(entries)
+
     # Create and place form fields
-    name_entry = CTk.CTkEntry(register_window, placeholder_text="Enter name")
-    name_entry.pack(pady=5)
+    entries['name_entry'] = CTk.CTkEntry(register_window, placeholder_text="Enter name")
+    entries['name_entry'].pack(pady=5)
 
-    student_num_entry = CTk.CTkEntry(register_window, placeholder_text="Enter student number")
-    student_num_entry.pack(pady=5)
+    entries['student_num_entry'] = CTk.CTkEntry(register_window, placeholder_text="Enter student number")
+    entries['student_num_entry'].pack(pady=5)
 
-    program_entry = CTk.CTkEntry(register_window, placeholder_text="Enter program")
-    program_entry.pack(pady=5)
+    entries['program_entry'] = CTk.CTkEntry(register_window, placeholder_text="Enter program")
+    entries['program_entry'].pack(pady=5)
 
-    year_entry = CTk.CTkEntry(register_window, placeholder_text="Enter year")
-    year_entry.pack(pady=5)
+    entries['year_entry'] = CTk.CTkEntry(register_window, placeholder_text="Enter year")
+    entries['year_entry'].pack(pady=5)
 
-    rfid_entry = CTk.CTkEntry(register_window, placeholder_text="Scan RFID")
-    rfid_entry.pack(pady=5)
+    entries['rfid_entry'] = CTk.CTkEntry(register_window, placeholder_text="Scan RFID")
+    entries['rfid_entry'].pack(pady=5)
 
     # Bind the "Enter" key to Register
-    rfid_entry.bind('<Return>', lambda event: rfid_scan_register(rfid_entry, name_entry, student_num_entry, program_entry, year_entry, register_window))
+    entries['rfid_entry'].bind('<Return>', lambda event: rfid_scan_register(entries, register_window))
+
     # Create and place a button to submit the form
-    # submit_button = CTk.CTkButton(register_window, text="Submit", command=lambda: submit_form(name_entry, program_entry, year_entry))
-    # submit_button.pack(pady=5)
+    submit_button = CTk.CTkButton(register_window, text="Submit", command=lambda: rfid_scan_register(entries, register_window))
+    submit_button.pack(pady=5)
 
 # Function to update tables dropdown based on the database
 def update_tables_dropdown():

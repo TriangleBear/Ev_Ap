@@ -254,35 +254,38 @@ def center_window(window):
     y = (window.winfo_screenheight() // 2) - (height // 2)
     window.geometry(f'{width}x{height}+{x}+{y}')
 
-root = CTk.CTk()
-root.title("AHO RFID Events")
-root.geometry("400x350")
-root.resizable(False, False)  # Disable resizing
-center_window(root)
+def run():
+    root = CTk.CTk()
+    root.title("AHO RFID Events")
+    root.geometry("400x350")
+    root.resizable(False, False)  # Disable resizing
+    center_window(root)
 
-# Dropdown box for tables
-table_var = CTk.StringVar(value="Select a table")  # Set default value
-table_dropdown = CTk.CTkOptionMenu(root, variable=table_var, values=[])
-table_dropdown.pack(pady=20)
+    # Dropdown box for tables
+    global table_var
+    table_var = CTk.StringVar(value="Select a table")  # Set default value
+    global table_dropdown
+    table_dropdown = CTk.CTkOptionMenu(root, variable=table_var, values=[])
+    table_dropdown.pack(pady=20)
 
-# Initial population of tables dropdown
-update_tables_dropdown()
+    # Initial population of tables dropdown
+    update_tables_dropdown()
 
-# Create and place buttons
-confirm_button = CTk.CTkButton(root, text="Confirm", command=lambda: confirm_button_clicked(table_var))
-confirm_button.pack(pady=20)
+    # Create and place buttons
+    confirm_button = CTk.CTkButton(root, text="Confirm", command=lambda: confirm_button_clicked(table_var))
+    confirm_button.pack(pady=20)
 
-create_event_button = CTk.CTkButton(root, text="Create Event", command=create_event_button_clicked)
-create_event_button.pack(pady=20)
+    create_event_button = CTk.CTkButton(root, text="Create Event", command=create_event_button_clicked)
+    create_event_button.pack(pady=20)
 
-show_memmbers_button = CTk.CTkButton(root, text="Show Members", command=lambda: create_table_window("Members"))
-show_memmbers_button.pack(pady=20)
+    show_memmbers_button = CTk.CTkButton(root, text="Show Members", command=lambda: create_table_window("Members"))
+    show_memmbers_button.pack(pady=20)
 
-register_member_button = CTk.CTkButton(root, text="Register Member", command=register_member_button_clicked)
-register_member_button.pack(pady=20)
+    register_member_button = CTk.CTkButton(root, text="Register Member", command=register_member_button_clicked)
+    register_member_button.pack(pady=20)
 
-# # Create and place refresh button
-# refresh_button = CTk.CTkButton(root, text="Refresh", command=lambda: update_tables_dropdown())
-# refresh_button.pack(pady=20)
+    # # Create and place refresh button
+    # refresh_button = CTk.CTkButton(root, text="Refresh", command=lambda: update_tables_dropdown())
+    # refresh_button.pack(pady=20)
 
-root.mainloop()
+    root.mainloop()

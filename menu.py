@@ -167,20 +167,21 @@ def rfid_scan_event(entry_widget, table_window, selected_table, display_data, da
 
     insert_digit(0)
 
-def rfid_scan_register(entry_widget, name, student_num, program, year, table_window):
+def rfid_scan_register(entry_widget, memberid, name, student_num, program, year, table_window):
     rfid_num = entry_widget.get()
+    member_id = memberid.get()
     member_name = name.get()
     member_student_num = student_num.get()
     member_program = program.get()
     member_year = year.get()
-    ic(rfid_num, member_name, member_program, member_year)
+    ic(rfid_num, member_id, member_name, member_program, member_year)
 
     # Check if the member already exists
     if DBActions.member_exists(rfid_num):
         CTkMessagebox(title="Member Register", message="Member already exists!", icon="error")
     else:
         # Register the new member
-        DBActions.member_register(rfid_num, member_name, member_student_num, member_program, member_year)
+        DBActions.member_register(rfid_num, member_id, member_name, member_student_num, member_program, member_year)
         if CTkMessagebox(title="Member Register", message="Member Registered!", icon="check"):
             table_window.after(300, table_window.destroy())
 
@@ -214,6 +215,9 @@ def register_member_button_clicked():
     center_window(register_window)
 
     # Create and place form fields
+    memberid_entry = CTk.CTkEntry(register_window, placeholder_text="Enter member ID")
+    memberid_entry.pack(pady=5)
+
     name_entry = CTk.CTkEntry(register_window, placeholder_text="Enter name")
     name_entry.pack(pady=5)
 
@@ -230,7 +234,7 @@ def register_member_button_clicked():
     rfid_entry.pack(pady=5)
 
     # Bind the "Enter" key to Register
-    rfid_entry.bind('<Return>', lambda event: rfid_scan_register(rfid_entry, name_entry, student_num_entry, program_entry, year_entry, register_window))
+    rfid_entry.bind('<Return>', lambda event: rfid_scan_register(rfid_entry, memberid_entry, name_entry, student_num_entry, program_entry, year_entry, register_window))
     # Create and place a button to submit the form
     # submit_button = CTk.CTkButton(register_window, text="Submit", command=lambda: submit_form(name_entry, program_entry, year_entry))
     # submit_button.pack(pady=5)

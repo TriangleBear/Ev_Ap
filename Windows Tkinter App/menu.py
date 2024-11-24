@@ -81,8 +81,17 @@ def create_table_window(selected_table):
         elif file_path.endswith('.xlsx'):
             df.to_excel(file_path, index=False)
 
-    export_button = CTk.CTkButton(table_window, text="Export", command=export_to_file)
-    export_button.pack(side='top', anchor='ne', padx=10, pady=10)
+    # Create a frame to contain both buttons
+    button_frame = CTk.CTkFrame(table_window)
+    button_frame.pack(side='top', anchor='ne', padx=10, pady=10)
+
+    # Add the refresh button to the frame
+    refresh_button = CTk.CTkButton(button_frame, text="Refresh", command=lambda: display_data(DBActions.fetch_table_data(selected_table)))
+    refresh_button.pack(side='left', padx=5)
+
+    # Add the export button to the frame
+    export_button = CTk.CTkButton(button_frame, text="Export", command=export_to_file)
+    export_button.pack(side='left', padx=5)
 
 rfid_cache = {}
 
@@ -171,6 +180,9 @@ def register_member_button_clicked():
         
         # Close the registration window after a short delay
         register_window.after(300, register_window.destroy)
+    
+    submit_button = CTk.CTkButton(register_window, text="Submit", command=member_register)
+    submit_button.pack(pady=5)
 
 
 def create_event_button_clicked():

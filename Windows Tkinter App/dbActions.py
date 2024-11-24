@@ -1,17 +1,18 @@
 import datetime
 from dbcloud import Database
 from icecream import ic
+import pymysql
 
 class DBActions:
     @staticmethod
     def member_register(rfid, memberid, name, student_num, program, year):
-        created_on = datetime.datetime.now()
+        created_on = datetime.datetime.now().strftime('%Y-%m-%d')
         try:
             with Database.get_db_connection() as conn:
                 with conn.cursor() as cursor:
                     sql = """INSERT INTO Members (rfid, memberid, name, student_num, program, year, date_registered) 
-                             VALUES (%s, %s, %s, %s, %s, %s)"""
-                    cursor.execute(sql, (rfid, memberid, name, student_num, program, year, created_on.strftime('%Y-%m-%d')))
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+                    cursor.execute(sql, (rfid, memberid, name, student_num, program, year, created_on))
                     conn.commit()
             return 0
         except pymysql.ProgrammingError as e:
@@ -20,6 +21,8 @@ class DBActions:
         except Exception as e:
             ic(e)  # Debugging line to print the exception
             return -1
+
+
 
     @staticmethod
     def member_exists(rfid):
@@ -56,9 +59,9 @@ class DBActions:
                     # Create the table
                     sql = f"""CREATE TABLE `{table_name}` (
                                 id INT auto_increment NOT NULL,
-                                rfid INT NOT NULL,
+                                rfid VARCHAR(50) NOT NULL,
                                 memberid VARCHAR(50) NOT NULL,
-                                student_num INT NOT NULL,
+                                student_num VARCHAR(50) NOT NULL,
                                 name VARCHAR(255) NOT NULL,
                                 attendance_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                 CONSTRAINT {table_name}_PK PRIMARY KEY (id),
@@ -76,7 +79,7 @@ class DBActions:
             try:
                 with Database.get_db_connection() as conn:
                     with conn.cursor() as cursor:
-                        sql = f"SELECT DISTINCT memberid, name, student_num, date_registered FROM Members"
+                        sql = f"SELECT DISTINCT rfid memberid, name, student_num, date_registered FROM Members"
                         cursor.execute(sql)
                         result = cursor.fetchall()
                 return result

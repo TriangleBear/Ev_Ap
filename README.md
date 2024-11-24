@@ -1,4 +1,4 @@
-# AHO RFID Events
+# RFID Events
 
 This project is a system that handles member registration, event creation, and RFID attendance tracking. It uses a MySQL database to store member details and event attendance data. The project includes a GUI built with `customtkinter` for easy interaction and management.
 

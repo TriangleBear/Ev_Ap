@@ -5,6 +5,7 @@ from creds import Credentials
 import time
 import pandas as pd
 from customtkinter import filedialog
+from dbActions import DBActions
 from icecream import ic
 
 def list_tables(selected_table):
@@ -176,30 +177,26 @@ def register_member_button_clicked():
     register_window.resizable(False, False)  # Disable resizing
     center_window(register_window)
 
-    entries = {}
-    ic(entries)
-
     # Create and place form fields
-
     memberid_entry = CTk.CTkEntry(register_window, placeholder_text="Enter member ID")
     memberid_entry.pack(pady=5)
 
     name_entry = CTk.CTkEntry(register_window, placeholder_text="Enter name")
     name_entry.pack(pady=5)
 
-    entries['student_num_entry'] = CTk.CTkEntry(register_window, placeholder_text="Enter student number")
-    entries['student_num_entry'].pack(pady=5)
+    student_num_entry = CTk.CTkEntry(register_window, placeholder_text="Enter student number")
+    student_num_entry.pack(pady=5)
 
-    entries['program_entry'] = CTk.CTkEntry(register_window, placeholder_text="Enter program")
-    entries['program_entry'].pack(pady=5)
+    program_entry = CTk.CTkEntry(register_window, placeholder_text="Enter program")
+    program_entry.pack(pady=5)
 
-    entries['year_entry'] = CTk.CTkEntry(register_window, placeholder_text="Enter year")
-    entries['year_entry'].pack(pady=5)
+    year_entry = CTk.CTkEntry(register_window, placeholder_text="Enter year")
+    year_entry.pack(pady=5)
 
-    entries['rfid_entry'] = CTk.CTkEntry(register_window, placeholder_text="Scan RFID")
-    entries['rfid_entry'].pack(pady=5)
+    rfid_entry = CTk.CTkEntry(register_window, placeholder_text="Scan RFID")
+    rfid_entry.pack(pady=5)
 
-    # Function to register member and show confirmation
+    # Define the member_register function to handle the form submission
     def member_register():
         rfid_num = rfid_entry.get()
         member_id = memberid_entry.get()
@@ -207,22 +204,25 @@ def register_member_button_clicked():
         student_num = student_num_entry.get()
         program = program_entry.get()
         year = year_entry.get()
+        print(f"RFID: {rfid_num}")
+        print(f"Member ID: {member_id}")
+        print(f"Name: {member_name}")
+        print(f"Student Number: {student_num}")
+        print(f"Program: {program}")
+        print(f"Year: {year}")
 
         # Check if the member already exists
         if DBActions.member_exists(rfid_num):
-            # If the member exists, show a message and return without registering
-            CTkMessagebox(title="Registration Error", message="This member is already registered!", icon="cancel")
-            return
+            ic("Member already exists!")
+            CTkMessagebox(title="Member Registration", message="Member already exists!", icon="error")
+            register_window.after(300, register_window.destroy)
+        else:
+            # Register the new member
+            ic("Registering new member...")
+            DBActions.member_register(rfid_num, member_id, member_name, student_num, program, year)
+            CTkMessagebox(title="Member Registration", message="Member Registered!", icon="check")
+            register_window.after(300, register_window.destroy)
 
-        # Register the new member
-        DBActions.member_register(rfid_num, member_id, member_name, student_num, program, year)
-        
-        # Show confirmation message box
-        CTkMessagebox(title="Member Register", message="Member Registered!", icon="check")
-        
-        # Close the registration window after a short delay
-        register_window.after(300, register_window.destroy)
-    
     submit_button = CTk.CTkButton(register_window, text="Submit", command=member_register)
     submit_button.pack(pady=5)
 

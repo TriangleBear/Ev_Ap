@@ -30,7 +30,7 @@ def create_table_window(selected_table):
     table_window = CTk.CTkToplevel()
     table_window.title(f"Event: {selected_table}")
     table_window.geometry('600x600')  # Set fixed window size
-    table_window.attributes('-topmost', True)
+    table_window.attributes('-topmost', False)
 
     def search_table(event):
         query = search_entry.get()
@@ -173,7 +173,7 @@ def register_member_button_clicked():
     register_window = CTk.CTkToplevel()
     register_window.title("Register New Member")
     register_window.geometry("400x300")
-    register_window.attributes('-topmost', True)  # Ensure the window is on top
+    register_window.attributes('-topmost', False)  # Ensure the window is on top
     register_window.resizable(False, False)  # Disable resizing
     center_window(register_window)
 
@@ -232,7 +232,7 @@ def create_event_button_clicked():
     event_window = CTk.CTkToplevel()
     event_window.title("Create Event")
     event_window.geometry("400x300")
-    event_window.attributes('-topmost', True)  # Ensure the window is on top
+    event_window.attributes('-topmost', False)  # Ensure the window is on top
     event_window.resizable(False, False)  # Disable resizing
     center_window(event_window)
 
@@ -271,7 +271,7 @@ def center_window(window):
     window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
 
-
+# Main window should be NOT topleveled
 root = CTk.CTk()
 root.title("AHO RFID Events")
 root.geometry("400x350")

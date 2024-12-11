@@ -33,8 +33,10 @@ def create_table_window(selected_table):
     table_window.attributes('-topmost', False)
 
     def search_table(event):
-        query = search_entry.get()
-        filtered_data = [row for row in data if any(query in str(cell) for cell in row.values() if isinstance(row, dict)) or any(query in str(cell) for cell in row)]
+        query = search_entry.get().lower()  # Convert the query to lowercase
+        filtered_data = [
+            row for row in data if any(query in str(cell).lower() for cell in row.values() if isinstance(row, dict)) or any(query in str(cell).lower() for cell in row)
+        ]
         display_data(filtered_data)
 
     search_entry = CTk.CTkEntry(table_window)
@@ -277,7 +279,7 @@ root.title("AHO RFID Events")
 root.geometry("400x350")
 root.resizable(False, False)
 
-icon_path = "D:/Programming/AHO/RFID App/ORG-RFID-EVENTS/icon64.ico"
+icon_path = r"D:/Programming/AHO/RFID App/ORG-RFID-EVENTS/icon64.ico"
 root.iconbitmap(icon_path)
 
 center_window(root)

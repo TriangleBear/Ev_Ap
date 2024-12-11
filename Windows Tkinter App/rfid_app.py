@@ -277,6 +277,9 @@ root.title("AHO RFID Events")
 root.geometry("400x350")
 root.resizable(False, False)
 
+icon_path = "D:/Programming/AHO/RFID App/ORG-RFID-EVENTS/icon64.ico"
+root.iconbitmap(icon_path)
+
 center_window(root)
 
 table_var = CTk.StringVar(value="Select a table")

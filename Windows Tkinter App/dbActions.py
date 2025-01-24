@@ -79,7 +79,7 @@ class DBActions:
             try:
                 with Database.get_db_connection() as conn:
                     with conn.cursor() as cursor:
-                        sql = f"SELECT DISTINCT rfid memberid, name, student_num, date_registered FROM Members"
+                        sql = f"SELECT DISTINCT rfid, memberid, name, student_num, date_registered FROM Members"
                         cursor.execute(sql)
                         result = cursor.fetchall()
                 return result

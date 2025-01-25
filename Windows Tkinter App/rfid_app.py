@@ -1,7 +1,6 @@
 import customtkinter as CTk
 from CTkMessagebox import CTkMessagebox
 from dblite import DBActions, Database
-from creds import Credentials
 import time
 import pandas as pd
 from customtkinter import filedialog

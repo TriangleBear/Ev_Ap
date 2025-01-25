@@ -21,7 +21,7 @@ This project is a system that handles member registration, event creation, and R
 
 ## Script Overview
 
-### `menu.py`
+### `rfid_app.py`
 
 This script defines the user interface and manages interactions with the database through `dblite.py`. The primary functions are:
 
@@ -33,6 +33,7 @@ This script defines the user interface and manages interactions with the databas
 - **create_event_button_clicked**: Opens a window to create a new event.
 - **update_tables_dropdown**: Updates the dropdown menu with the available tables from the SQLite database.
 - **center_window**: Centers the window on the screen.
+- **rfid_scan_event**: Handles RFID scans and updates the attendance for the corresponding event.
 
 ### `dblite.py`
 
@@ -44,12 +45,6 @@ This script manages all interactions with the SQLite database, including registe
 - **create_event_table**: Creates a new table for an event, associating it with the 'Members' table.
 - **fetch_table_data**: Fetches data from a specified table, either member data or event attendance data.
 - **attendance_member_event**: Records attendance for a member at a specific event.
-
-### `rfid_app.py`
-
-This script handles the RFID scanning events and updates the GUI accordingly. It connects to the database through the functions in `dblite.py`.
-
-- **rfid_scan_event**: Handles RFID scans and updates the attendance for the corresponding event.
 
 ---
 

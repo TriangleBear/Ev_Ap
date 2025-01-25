@@ -7,7 +7,7 @@ import pandas as pd
 from customtkinter import filedialog
 from dbActions import DBActions
 from icecream import ic
-
+ 
 def list_tables(selected_table):
     # Check all tables in the database
     tables = DBActions.list_tables(Credentials.db)
@@ -302,4 +302,10 @@ show_memmbers_button.pack(pady=20)
 register_member_button = CTk.CTkButton(root, text="Register Member", command=register_member_button_clicked)
 register_member_button.pack(pady=20)
 
-root.mainloop()
+class MyApp:
+    def __init__(self):
+        # Initialization code here
+        pass
+
+    def run(self):
+        root.mainloop()

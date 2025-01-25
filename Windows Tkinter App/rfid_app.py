@@ -1,10 +1,14 @@
 import customtkinter as CTk
 from CTkMessagebox import CTkMessagebox
+from tkinter import PhotoImage
 from dblite import DBActions, Database
 import time
 import pandas as pd
 from customtkinter import filedialog
 from icecream import ic
+import os
+import sys
+
  
 def list_tables(selected_table):
     # Check all tables in the database
@@ -23,6 +27,8 @@ def confirm_button_clicked(table_var):
         CTkMessagebox(title="Warning", message="The 'Members' table cannot be selected", icon="warning")
     else:
         create_table_window(selected_table)
+
+
 
 def create_table_window(selected_table):
     table_window = CTk.CTkToplevel()
@@ -293,8 +299,9 @@ root.title("AHO RFID Events")
 root.geometry("400x350")
 root.resizable(False, False)
 
-icon_path = r"D:/Programming/AHO/RFID App/ORG-RFID-EVENTS/icon64.ico"
-root.iconbitmap(icon_path)
+# icon_path = r"D:/Programming/AHO/RFID App/ORG-RFID-EVENTS/icon64.ico"
+# icon = PhotoImage(file=icon_path)
+# root.iconphoto(False, icon)
 
 center_window(root)
 

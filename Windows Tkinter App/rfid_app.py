@@ -7,7 +7,7 @@ import pandas as pd
 from customtkinter import filedialog
 from dbActions import DBActions
 from icecream import ic
-
+ 
 def list_tables(selected_table):
     # Check all tables in the database
     tables = DBActions.list_tables(Credentials.db)
@@ -30,11 +30,13 @@ def create_table_window(selected_table):
     table_window = CTk.CTkToplevel()
     table_window.title(f"Event: {selected_table}")
     table_window.geometry('600x600')  # Set fixed window size
-    table_window.attributes('-topmost', True)
+    table_window.attributes('-topmost', False)
 
     def search_table(event):
-        query = search_entry.get()
-        filtered_data = [row for row in data if any(query in str(cell) for cell in row.values() if isinstance(row, dict)) or any(query in str(cell) for cell in row)]
+        query = search_entry.get().lower()  # Convert the query to lowercase
+        filtered_data = [
+            row for row in data if any(query in str(cell).lower() for cell in row.values() if isinstance(row, dict)) or any(query in str(cell).lower() for cell in row)
+        ]
         display_data(filtered_data)
 
     search_entry = CTk.CTkEntry(table_window)
@@ -173,7 +175,7 @@ def register_member_button_clicked():
     register_window = CTk.CTkToplevel()
     register_window.title("Register New Member")
     register_window.geometry("400x300")
-    register_window.attributes('-topmost', True)  # Ensure the window is on top
+    register_window.attributes('-topmost', False)  # Ensure the window is on top
     register_window.resizable(False, False)  # Disable resizing
     center_window(register_window)
 
@@ -232,7 +234,7 @@ def create_event_button_clicked():
     event_window = CTk.CTkToplevel()
     event_window.title("Create Event")
     event_window.geometry("400x300")
-    event_window.attributes('-topmost', True)  # Ensure the window is on top
+    event_window.attributes('-topmost', False)  # Ensure the window is on top
     event_window.resizable(False, False)  # Disable resizing
     center_window(event_window)
 
@@ -271,11 +273,14 @@ def center_window(window):
     window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
 
-
+# Main window should be NOT topleveled
 root = CTk.CTk()
 root.title("AHO RFID Events")
 root.geometry("400x350")
 root.resizable(False, False)
+
+icon_path = r"D:/Programming/AHO/RFID App/ORG-RFID-EVENTS/icon64.ico"
+root.iconbitmap(icon_path)
 
 center_window(root)
 
@@ -297,4 +302,10 @@ show_memmbers_button.pack(pady=20)
 register_member_button = CTk.CTkButton(root, text="Register Member", command=register_member_button_clicked)
 register_member_button.pack(pady=20)
 
-root.mainloop()
+class MyApp:
+    def __init__(self):
+        # Initialization code here
+        pass
+
+    def run(self):
+        root.mainloop()

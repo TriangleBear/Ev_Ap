@@ -1,11 +1,10 @@
 import customtkinter as CTk
 from CTkMessagebox import CTkMessagebox
-from dbActions import DBActions
+from dblite import DBActions, Database
 from creds import Credentials
 import time
 import pandas as pd
 from customtkinter import filedialog
-from dbActions import DBActions
 from icecream import ic
  
 def list_tables(selected_table):
@@ -13,7 +12,7 @@ def list_tables(selected_table):
     tables = DBActions.list_tables(Credentials.db)
     if tables is None:
         return []
-    return [list(row.values())[0] for row in tables if isinstance(row, dict) and row]
+    return [table for table in tables if table != 'Members']
 
 def confirm_button_clicked(table_var):
     selected_table = table_var.get()
@@ -254,8 +253,24 @@ def create_event_button_clicked():
 
 
 def update_tables_dropdown():
-    tables = list_tables(Credentials.db)
-    table_dropdown.configure(values=tables)
+    # Check if the database exists or needs to be created
+    if not Database.db_exists():
+        # If the database doesn't exist, initialize it
+        Database.initialize_db()  # This creates the database and tables
+
+    # Fetch the list of tables
+    tables = DBActions.list_tables()
+
+    # Debugging: Check the list of tables
+    ic(tables)  # This will print the list of tables, check if it's populated
+
+    if tables:
+        # Update the dropdown with the fetched tables
+        table_dropdown.configure(values=tables)
+    else:
+        # Handle the case where no tables are found
+        table_dropdown.configure(values=["No tables available"])
+
 
 def center_window(window):
     window_width = window.winfo_width()

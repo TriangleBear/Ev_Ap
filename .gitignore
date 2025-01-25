@@ -160,4 +160,4 @@ cython_debug/
 #.idea/
 creds.py
 dbActionsCloud.py
-AHO_MEMBER.db
+*.db

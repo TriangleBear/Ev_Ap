@@ -64,8 +64,8 @@
 
 ## Screenshots
 
-![Event Attendance Screenshot](Screenshots\main.png)
-![Member List Screenshot](Screenshots\memberList.png)
+![Event Attendance Screenshot](Screenshots/main.png)
+![Member List Screenshot](Screenshots/memberList.png)
 
 ## Contributing
 

@@ -1,119 +1,86 @@
-# EVENT ATTENDANCE
+Here's a draft for the `README.md` file for the "Event Attendance" project. Feel free to modify any details or let me know if you want me to add more sections!
 
-This project is a system that handles member registration, event creation, and RFID attendance tracking. It uses an SQLite database to store member details and event attendance data. The project includes a GUI built with `customtkinter` for easy interaction and management.
+---
+
+# Event Attendance
+
+**Event Attendance** is an application designed for managing event attendance using RFID technology. It allows users to register members, track attendance at events, and manage event-related data efficiently.
+
+## Features
+
+- **Member Registration:** Register members with their RFID cards, ID, name, program, and year.
+- **Event Management:** Create new events and track member attendance for each event.
+- **Attendance Tracking:** Scan RFID cards to mark attendance for members at events.
+- **Data Export:** Export attendance data to CSV or Excel for further analysis.
 
 ## Requirements
 
 - Python 3.x
-- `customtkinter` for the GUI
-- `sqlite3` for database interactions
-- `pandas` for handling data
-- `icecream` for debugging
-- `CTkMessagebox` for showing message boxes
+- SQLite (automatically handled by the application)
+- CustomTkinter (for the UI)
+- IceCream (for debugging)
+- pandas (for exporting data)
 
-## Project Structure
+## Installation
 
-1. **menu.py** - The main GUI file, handling the user interface for registering members, creating events, and managing tables.
-2. **dblite.py** - Contains the database interaction logic for registering members, creating event tables, and recording attendance using SQLite.
-3. **rfid_app.py** - Handles the user interface for scanning RFID tags and interacting with the database.
+1. Clone this repository:
+    ```bash
+    git clone https://github.com/yourusername/event-attendance.git
+    ```
 
----
+2. Navigate to the project directory:
+    ```bash
+    cd event-attendance
+    ```
 
-## Script Overview
+3. Install the required Python libraries:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### `rfid_app.py`
-
-This script defines the user interface and manages interactions with the database through `dblite.py`. The primary functions are:
-
-- **list_tables**: Retrieves all tables from the SQLite database, excluding the 'Members' table.
-- **confirm_button_clicked**: Handles the selection of a table and opens a new window to display its data.
-- **create_table_window**: Creates a new window to display data from a selected table, with functionality for searching, refreshing, and exporting data.
-- **rfid_scan_event**: Handles RFID scanning events, verifies if the RFID exists, and records attendance.
-- **register_member_button_clicked**: Opens a window to register a new member by entering details like member ID, name, student number, and RFID.
-- **create_event_button_clicked**: Opens a window to create a new event.
-- **update_tables_dropdown**: Updates the dropdown menu with the available tables from the SQLite database.
-- **center_window**: Centers the window on the screen.
-- **rfid_scan_event**: Handles RFID scans and updates the attendance for the corresponding event.
-
-### `dblite.py`
-
-This script manages all interactions with the SQLite database, including registering members, creating event tables, and recording attendance.
-
-- **member_register**: Registers a new member in the SQLite database.
-- **member_exists**: Checks if a member exists based on the RFID number.
-- **list_tables**: Retrieves a list of all tables from the database, excluding the 'Members' table.
-- **create_event_table**: Creates a new table for an event, associating it with the 'Members' table.
-- **fetch_table_data**: Fetches data from a specified table, either member data or event attendance data.
-- **attendance_member_event**: Records attendance for a member at a specific event.
-
----
+4. Run the application:
+    ```bash
+    python main.py
+    ```
 
 ## Usage
 
-1. Clone the repository:
+### Registering a Member
 
-    ```bash
-    git clone https://github.com/TriangleBear/ORG-RFID-EVENTS.git
-    ```
+1. Open the "Register Member" window from the main menu.
+2. Fill in the member's details (RFID, name, student number, program, year).
+3. Click the "Submit" button to register the member.
 
-2. Install the necessary dependencies:
+### Creating an Event
 
-    ```bash
-    pip install customtkinter pandas icecream
-    ```
+1. Open the "Create Event" window.
+2. Enter a name for the new event.
+3. Click "Submit" to create the event and start tracking attendance.
 
-3. Set up the SQLite database by creating the required tables for 'Members' and any event-specific tables you need. The database will be created automatically when running the application if it doesn't exist.
+### Marking Attendance
 
-4. Run the `menu.py` file to start the application:
+1. Select an event from the "Select a table" dropdown menu.
+2. Scan the RFID card of a registered member to mark their attendance at the event.
 
-    ```bash
-    python menu.py
-    ```
+### Exporting Data
 
-5. Interact with the GUI to:
+1. After viewing the event's attendance data, click "Export" to save the data as a CSV or Excel file.
 
-    - Register new members.
-    - Create events and manage attendance.
-    - View and export data from the 'Members' table and other event tables.
+## Screenshots
 
----
+![Event Attendance Screenshot](Screenshots\main.png)
+![Member List Screenshot](Screenshots\memberList.png)
 
-## Database Setup
+## Contributing
 
-The SQLite database is automatically created and initialized if it doesn't already exist. The required tables for 'Members' and event-specific tables are created dynamically.
+We welcome contributions! If you would like to help improve the Event Attendance app, follow these steps:
 
-- **Members Table**: Stores information about each member.
-  
-  ```sql
-  CREATE TABLE IF NOT EXISTS Members (
-      rfid TEXT PRIMARY KEY,
-      memberid TEXT,
-      name TEXT,
-      student_num TEXT,
-      program TEXT,
-      year TEXT,
-      date_registered TEXT
-  );
-  ```
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes.
+4. Test your changes thoroughly.
+5. Submit a pull request describing your changes.
 
-- **Event Tables**: Created dynamically by the application for each event. Example:
+## License
 
-  ```sql
-  CREATE TABLE IF NOT EXISTS Event1 (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      rfid TEXT,
-      memberid TEXT,
-      student_num TEXT,
-      name TEXT,
-      attendance_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (rfid) REFERENCES Members(rfid)
-  );
-  ```
-
----
-
-## Troubleshooting
-
-- **Database connection issues**: Ensure the SQLite database file is accessible and not locked by another process.
-- **RFID scan not working**: Ensure your RFID reader is properly connected and configured.
-- **GUI layout issues**: If the layout is not appearing correctly, ensure your screen resolution is compatible with the window sizes defined.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

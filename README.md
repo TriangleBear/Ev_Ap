@@ -1,7 +1,3 @@
-Here's a draft for the `README.md` file for the "Event Attendance" project. Feel free to modify any details or let me know if you want me to add more sections!
-
----
-
 # Event Attendance
 
 **Event Attendance** is an application designed for managing event attendance using RFID technology. It allows users to register members, track attendance at events, and manage event-related data efficiently.

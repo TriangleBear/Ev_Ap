@@ -31,12 +31,6 @@ Before you start developing, make sure you have the following tools installed:
     pip install -r requirements.txt
     ```
 
-4. Set up any necessary environment variables (if applicable). Make sure to create a `.env` file with the following format:
-    ```env
-    DATABASE_URL=your_database_url
-    SECRET_KEY=your_secret_key
-    ```
-
 ### Running the Application Locally
 
 To start the application locally, use the following command:
@@ -44,8 +38,6 @@ To start the application locally, use the following command:
 ```bash
 python app.py
 ```
-
-The app will be running at `http://127.0.0.1:5000/` by default.
 
 ## Contributing
 

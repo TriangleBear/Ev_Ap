@@ -238,7 +238,7 @@ def create_event_button_clicked():
     event_window = CTk.CTkToplevel()
     event_window.title("Create Event")
     event_window.geometry("400x300")
-    event_window.attributes('-topmost', False)  # Ensure the window is on top
+    event_window.attributes('-topmost', False)  # Ensure the window is not always on top
     event_window.resizable(False, False)  # Disable resizing
     center_window(event_window)
 
@@ -246,13 +246,29 @@ def create_event_button_clicked():
     event_name_entry = CTk.CTkEntry(event_window, placeholder_text="Enter event name")
     event_name_entry.pack(pady=5)
 
-    # Function to create event and show confirmation
+    # Function to create the event and show confirmation
     def event_create():
-        event_name = event_name_entry.get()
-        DBActions.create_event_table(event_name)
-        CTkMessagebox(title="Event Creation", message="Event Created!", icon="check")
-        event_window.after(300, event_window.destroy)
+        event_name = event_name_entry.get().strip()  # Get the event name and remove extra spaces
 
+        if not event_name:  # Check if the event name is empty
+            CTkMessagebox(title="Event Creation", message="Event name cannot be empty!", icon="error")
+            return
+
+        try:
+            # Create the event table
+            DBActions.create_event_table(event_name)
+            CTkMessagebox(title="Event Creation", message="Event Created!", icon="check")
+
+            # Refresh the dropdown to include the new table
+            update_tables_dropdown()
+
+            # Close the event window
+            event_window.destroy()
+        except Exception as e:
+            # Handle any errors during table creation
+            CTkMessagebox(title="Event Creation Error", message=f"Error creating event: {str(e)}", icon="error")
+
+    # Add the submit button to the form
     submit_button = CTk.CTkButton(event_window, text="Submit", command=event_create)
     submit_button.pack(pady=5)
 
@@ -263,18 +279,22 @@ def update_tables_dropdown():
         # If the database doesn't exist, initialize it
         Database.initialize_db()  # This creates the database and tables
 
-    # Fetch the list of tables
+    # Fetch the list of tables, excluding the restricted 'Members' table
     tables = DBActions.list_tables()
+    tables = [table for table in tables if table != 'Members']  # Exclude 'Members' table
 
     # Debugging: Check the list of tables
-    ic(tables)  # This will print the list of tables, check if it's populated
+    ic(tables)  # This will print the list of tables for debugging
 
+    # Update the dropdown with the fetched tables
     if tables:
-        # Update the dropdown with the fetched tables
         table_dropdown.configure(values=tables)
+        if "Select a table" not in tables:
+            table_dropdown.set("Select a table")  # Set a default option
     else:
         # Handle the case where no tables are found
         table_dropdown.configure(values=["No tables available"])
+        table_dropdown.set("No tables available")
 
 
 def center_window(window):

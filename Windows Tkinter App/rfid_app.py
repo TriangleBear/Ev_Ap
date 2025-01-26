@@ -315,11 +315,11 @@ def center_window(window):
 
 # Main window should be NOT topleveled
 root = CTk.CTk()
-root.title("AHO RFID Events")
+root.title("Events Attendance")
 root.geometry("400x350")
 root.resizable(False, False)
 
-# icon_path = r"D:/Programming/AHO/RFID App/ORG-RFID-EVENTS/icon64.ico"
+# icon_path = "ORG-RFID-EVENTS/icon64.ico"
 # icon = PhotoImage(file=icon_path)
 # root.iconphoto(False, icon)
 

@@ -1,6 +1,4 @@
 from rfid_app import MyApp
-import customtkinter as CTk
-from CTkMessagebox import CTkMessagebox
 
 class RFIDApp(MyApp):
     def __init__(self):

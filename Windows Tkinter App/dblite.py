@@ -154,7 +154,7 @@ class Database:
 
     @staticmethod
     def db_exists():
-        db_path = 'AHO_MEMBER.db'
+        db_path = 'MEMBERSdb.db'
         # Check if the database file exists
         return os.path.exists(db_path)
 

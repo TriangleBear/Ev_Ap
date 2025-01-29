@@ -26,7 +26,7 @@
 
 2. Navigate to the project directory:
     ```bash
-    cd event-attendance
+    cd Ev_Ap
     ```
 
 3. Install the required Python libraries:

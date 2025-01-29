@@ -21,7 +21,7 @@
 
 1. Clone this repository:
     ```bash
-    git clone https://github.com/yourusername/event-attendance.git
+    git clone https://github.com/TriangleBear/Ev_Ap
     ```
 
 2. Navigate to the project directory:

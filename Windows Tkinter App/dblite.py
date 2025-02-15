@@ -30,7 +30,7 @@ class DBActions:
                 sql = "SELECT memberid FROM Members WHERE rfid = ?"
                 cursor.execute(sql, (rfid,))
                 result = cursor.fetchone()
-            return result
+            return result if result else None
         except Exception as e:
             ic(e)  # Debugging line to print the exception
             return None
@@ -120,6 +120,45 @@ class DBActions:
             ic(e)
             return None
 
+    @staticmethod
+    def add_points(rfid, points):
+        try:
+            with Database.get_db_connection() as conn:
+                cursor = conn.cursor()
+                sql = "UPDATE Members SET points = points + ? WHERE rfid = ?"
+                cursor.execute(sql, (points, rfid))
+                conn.commit()
+            return 0
+        except Exception as e:
+            ic(e)
+            return -1
+
+    @staticmethod
+    def get_member_points(rfid):
+        try:
+            with Database.get_db_connection() as conn:
+                cursor = conn.cursor()
+                sql = "SELECT points FROM Members WHERE rfid = ?"
+                cursor.execute(sql, (rfid,))
+                result = cursor.fetchone()
+            return result['points'] if result else None
+        except Exception as e:
+            ic(e)
+            return None
+
+    @staticmethod
+    def redeem_points(rfid, points):
+        try:
+            with Database.get_db_connection() as conn:
+                cursor = conn.cursor()
+                sql = "UPDATE Members SET points = points - ? WHERE rfid = ?"
+                cursor.execute(sql, (points, rfid))
+                conn.commit()
+            return 0
+        except Exception as e:
+            ic(e)
+            return -1
+
 
 class Database:
     @staticmethod
@@ -147,14 +186,20 @@ class Database:
             student_num TEXT,
             program TEXT,
             year TEXT,
-            date_registered TEXT
+            date_registered TEXT,
+            points REAL DEFAULT 0
         )''')
+        # Add the points column if it doesn't exist
+        cursor.execute("PRAGMA table_info(Members)")
+        columns = [column[1] for column in cursor.fetchall()]
+        if 'points' not in columns:
+            cursor.execute("ALTER TABLE Members ADD COLUMN points REAL DEFAULT 0")
         conn.commit()
         conn.close()
 
     @staticmethod
     def db_exists():
-        db_path = 'MEMBERSdb.db'
+        db_path = 'AHO_MEMBER.db'
         # Check if the database file exists
         return os.path.exists(db_path)
 

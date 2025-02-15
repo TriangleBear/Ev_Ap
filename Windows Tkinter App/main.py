@@ -1,6 +1,6 @@
-from rfid_app import MyApp
+from rfid_app import RFIDApp
 
-class RFIDApp(MyApp):
+class RFIDApp(RFIDApp):
     def __init__(self):
         super().__init__()
 

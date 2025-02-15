@@ -217,16 +217,9 @@ class RFIDApp:
         event_name_label = CTk.CTkLabel(event_window, text=f"Event Name: {event_name}")
         event_name_label.pack(pady=5)
 
-        points_label = CTk.CTkLabel(event_window, text="Select points for this event:")
-        points_label.pack(pady=5)
-
-        points_var = CTk.StringVar(value="0.10")
-        points_dropdown = CTk.CTkOptionMenu(event_window, variable=points_var, values=["0.10", "0.15", "0.20", "0.25", "0.30"])
-        points_dropdown.pack(pady=5)
-
         # Function to create the event and show confirmation
         def event_create():
-            points = float(points_var.get())
+            points = 0.10  # Set points to 0.10 by default
 
             try:
                 # Create the event table

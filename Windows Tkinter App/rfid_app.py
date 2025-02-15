@@ -19,12 +19,12 @@ class MainApp:
         self.table_var = CTk.StringVar(value="Select a table")
         self.table_dropdown = CTk.CTkOptionMenu(self.root, variable=self.table_var, values=[])
         self.table_dropdown.pack(pady=20)
-        self.update_tables_dropdown()
-        self.create_widgets()
-        self.center_window(self.root)
         self.event_manager = EventManager(self)
         self.member_manager = MemberManager(self)
         self.table_manager = TableManager(self)
+        self.create_widgets()
+        self.update_tables_dropdown()
+        self.center_window(self.root)
 
     def create_widgets(self):
         confirm_button = CTk.CTkButton(self.root, text="Confirm", command=lambda: self.confirm_button_clicked(self.table_var))

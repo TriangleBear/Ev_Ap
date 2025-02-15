@@ -205,6 +205,13 @@ def create_event_button_clicked():
         else:
             ic("No event name provided. Exiting...")
             CTkMessagebox(title="Create Event", message="No event name provided.", icon="error")
+            # Register the new member
+            DBActions.member_register(rfid_num, member_name, member_student_num, member_program, member_year)
+            if CTkMessagebox(title="Member Register", message="Member Registered!", icon="check"):
+                for entry in entries.values():
+                    entry.delete(0, CTk.END)
+                table_window.after(300)
+
     def create_event_button_clicked(self):
         # Create a new window with a form to create a new event
         event_window = CTk.CTkToplevel()
@@ -249,6 +256,126 @@ def create_event_button_clicked():
         # Add the submit button to the form
         submit_button = CTk.CTkButton(event_window, text="Submit", command=event_create)
         submit_button.pack(pady=5)
+
+    def register_member_button_clicked(self):
+        ic("register_member_button_clicked")
+        # Create a new window with a form to register a new member
+        register_window = CTk.CTkToplevel()
+        register_window.title("Register New Member")
+        register_window.geometry("400x300")
+        register_window.attributes('-topmost', False)  # Ensure the window is on top
+        register_window.resizable(False, False)  # Disable resizing
+        self.center_window(register_window)
+
+        # Create and place form fields
+        memberid_entry = CTk.CTkEntry(register_window, placeholder_text="Enter member ID")
+        memberid_entry.pack(pady=5)
+
+        name_entry = CTk.CTkEntry(register_window, placeholder_text="Enter name")
+        name_entry.pack(pady=5)
+
+        student_num_entry = CTk.CTkEntry(register_window, placeholder_text="Enter student number")
+        student_num_entry.pack(pady=5)
+
+        program_entry = CTk.CTkEntry(register_window, placeholder_text="Enter program")
+        program_entry.pack(pady=5)
+
+        year_entry = CTk.CTkEntry(register_window, placeholder_text="Enter year")
+        year_entry.pack(pady=5)
+
+        rfid_entry = CTk.CTkEntry(register_window, placeholder_text="Scan RFID")
+        rfid_entry.pack(pady=5)
+
+        # Define the member_register function to handle the form submission
+        def member_register():
+            rfid_num = rfid_entry.get()
+            member_id = memberid_entry.get()
+            member_name = name_entry.get()
+            student_num = student_num_entry.get()
+            program = program_entry.get()
+            year = year_entry.get()
+            print(f"RFID: {rfid_num}")
+            print(f"Member ID: {member_id}")
+            print(f"Name: {member_name}")
+            print(f"Student Number: {student_num}")
+            print(f"Program: {program}")
+            print(f"Year: {year}")
+
+            # Check if the member already exists
+            if DBActions.member_exists(rfid_num):
+                ic("Member already exists!")
+                CTkMessagebox(title="Member Registration", message="Member already exists!", icon="error")
+                register_window.after(300, register_window.destroy)
+            else:
+                # Register the new member
+                ic("Registering new member...")
+                DBActions.member_register(rfid_num, member_id, member_name, student_num, program, year)
+                CTkMessagebox(title="Member Registration", message="Member Registered!", icon="check")
+                register_window.after(300, register_window.destroy)
+
+        submit_button = CTk.CTkButton(register_window, text="Submit", command=member_register)
+        submit_button.pack(pady=5)
+
+    def redeem_points_button_clicked(self):
+        redeem_window = CTk.CTkToplevel()
+        redeem_window.title("Redeem Points")
+        redeem_window.geometry("400x300")
+        redeem_window.attributes('-topmost', False)
+        self.center_window(redeem_window)
+
+        rfid_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter RFID")
+        rfid_entry.pack(pady=5)
+
+        points_entry = CTk.CTkEntry(event_window, placeholder_text="Enter points for this event")
+        points_entry.pack(pady=5)
+
+        # Function to create the event and show confirmation
+        def event_create():
+            event_name = event_name_entry.get().strip()  # Get the event name and remove extra spaces
+            points = points_entry.get().strip()
+
+            if not event_name or not points:  # Check if the event name or points are empty
+                CTkMessagebox(title="Event Creation", message="Event name and points cannot be empty!", icon="error")
+        def redeem_points():
+            rfid_num = rfid_entry.get().strip()
+            if not rfid_num:
+                CTkMessagebox(title="Redeem Points", message="RFID cannot be empty!", icon="error")
+                return
+            points = DBActions.get_member_points(rfid_num)
+            if points is None:
+                CTkMessagebox(title="Redeem Points", message="Member not found!", icon="error")
+                return
+            discount_20 = points * 0.20
+            discount_50 = points * 0.50
+            response = CTkMessagebox(title="Redeem Points", message=f"Points: {points}\n20% Discount: {discount_20}\n50% Discount: {discount_50}", icon="question", option_1="20%", option_2="50%")
+            if response.get() == "20%":
+                DBActions.redeem_points(rfid_num, discount_20)
+            elif response.get() == "50%":
+                DBActions.redeem_points(rfid_num, discount_50)
+            CTkMessagebox(title="Redeem Points", message="Points redeemed successfully!", icon="check")
+            redeem_window.destroy()
+
+            try:
+                points = float(points)
+                # Create the event table
+                DBActions.create_event_table(event_name)
+                self.points_per_event[event_name] = points
+                CTkMessagebox(title="Event Creation", message="Event Created!", icon="check")
+
+                # Refresh the dropdown to include the new table
+                self.update_tables_dropdown()
+
+                # Close the event window
+                event_window.destroy()
+            except Exception as e:
+                # Handle any errors during table creation
+                CTkMessagebox(title="Event Creation Error", message=f"Error creating event: {str(e)}", icon="error")
+
+        # Add the submit button to the form
+        submit_button = CTk.CTkButton(event_window, text="Submit", command=event_create)
+        submit_button.pack(pady=5)
+        redeem_button = CTk.CTkButton(redeem_window, text="Redeem", command=redeem_points)
+        redeem_button.pack(pady=5)
 
 def register_member_button_clicked():
     ic("register_member_button_clicked")

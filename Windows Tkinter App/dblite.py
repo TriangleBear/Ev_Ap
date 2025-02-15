@@ -27,7 +27,7 @@ class DBActions:
         try:
             with Database.get_db_connection() as conn:
                 cursor = conn.cursor()
-                sql = "SELECT memberid FROM Members WHERE rfid = ?"
+                sql = "SELECT memberid, name, student_num FROM Members WHERE rfid = ?"
                 cursor.execute(sql, (rfid,))
                 result = cursor.fetchone()
             return result if result else None
@@ -49,7 +49,6 @@ class DBActions:
         except Exception as e:
             ic(e)
             return []
-
 
     @staticmethod
     def create_event_table(table_name):

@@ -8,6 +8,7 @@ from customtkinter import filedialog
 from icecream import ic
 import os
 import sys
+import sqlite3
 
 class RFIDApp:
     def __init__(self):
@@ -22,6 +23,8 @@ class RFIDApp:
         self.update_tables_dropdown()
         self.create_widgets()
         self.center_window(self.root)
+        self.points_per_event = {}  # Initialize points per event
+        self.table_window = None  # Initialize table_window
 
     def create_widgets(self):
         confirm_button = CTk.CTkButton(self.root, text="Confirm", command=lambda: self.confirm_button_clicked(self.table_var))
@@ -35,6 +38,9 @@ class RFIDApp:
 
         register_member_button = CTk.CTkButton(self.root, text="Register Member", command=self.register_member_button_clicked)
         register_member_button.pack(pady=20)
+
+        redeem_points_button = CTk.CTkButton(self.root, text="Redeem Points", command=self.redeem_points_button_clicked)
+        redeem_points_button.pack(pady=20)
 
     def run(self):
         self.root.mainloop()
@@ -65,7 +71,7 @@ class RFIDApp:
         def search_table(event):
             query = search_entry.get().lower()  # Convert the query to lowercase
             filtered_data = [
-                row for row in data if any(query in str(cell).lower() for cell in row.values() if isinstance(row, dict)) or any(query in str(cell).lower() for cell in row)
+                row for row in data if any(query in str(cell).lower() for cell in dict(row).values()) or any(query in str(cell).lower() for cell in row)
             ]
             display_data(filtered_data)
 
@@ -88,7 +94,7 @@ class RFIDApp:
 
             widget_index = 0
             for i, row in enumerate(filtered_data):
-                values = list(row.values()) if isinstance(row, dict) else row
+                values = list(dict(row).values()) if isinstance(row, sqlite3.Row) else row
                 for j, cell_data in enumerate(values):
                     cell = existing_widgets[widget_index]
                     cell.configure(text=cell_data)
@@ -139,7 +145,8 @@ class RFIDApp:
 
         def insert_digit(index):
             if index < len(rfid_num):
-                if not DBActions.member_exists(rfid_num):
+                member = DBActions.member_exists(rfid_num)
+                if not member:
                     messagebox2 = CTkMessagebox(title="RFID Scan Error", message="RFID number not found", icon="cancel")
                     table_window.after(1000, messagebox2.destroy)  # Close the message box after 1 second
                     entry_widget.delete(0, CTk.END)
@@ -151,6 +158,9 @@ class RFIDApp:
                 messagebox2 = CTkMessagebox(title="RFID Scan", message="RFID recorded", icon="check")
                 table_window.after(1000, messagebox2.destroy)  # Close the message box after 1 second
                 entry_widget.delete(0, CTk.END)
+
+                points = self.points_per_event.get(selected_table, 0)
+                DBActions.add_points(rfid_num, points)
 
         def refresh_data():
             updated_data = DBActions.fetch_table_data(selected_table)
@@ -189,13 +199,125 @@ class RFIDApp:
             event_name = dialog.get_input()
             if event_name:
                 ic(f"Creating new event '{event_name}'...")
-                DBActions.create_event_table(event_name)
-                ic(f"New event '{event_name}' created successfully!")
-                CTkMessagebox(title="Create Event", message=f"New event '{event_name}' created successfully!", icon="check")
-                self.update_tables_dropdown()
+                self.create_event_window(event_name)
             else:
                 ic("No event name provided. Exiting...")
                 CTkMessagebox(title="Create Event", message="No event name provided.", icon="error")
+
+    def create_event_window(self, event_name):
+        event_window = CTk.CTkToplevel()
+        event_window.title("Create Event")
+        event_window.geometry("400x300")
+        event_window.attributes('-topmost', False)  # Ensure the window is not always on top
+        event_window.resizable(False, False)  # Disable resizing
+        self.center_window(event_window)
+
+        # Create and place form fields
+        event_name_label = CTk.CTkLabel(event_window, text=f"Event Name: {event_name}")
+        event_name_label.pack(pady=5)
+
+        points_label = CTk.CTkLabel(event_window, text="Select points for this event:")
+        points_label.pack(pady=5)
+
+        points_var = CTk.StringVar(value="0.10")
+        points_dropdown = CTk.CTkOptionMenu(event_window, variable=points_var, values=["0.10", "0.15", "0.20", "0.25", "0.30"])
+        points_dropdown.pack(pady=5)
+
+        # Function to create the event and show confirmation
+        def event_create():
+            points = float(points_var.get())
+
+            try:
+                # Create the event table
+                DBActions.create_event_table(event_name)
+                self.points_per_event[event_name] = points
+                CTkMessagebox(title="Event Creation", message="Event Created!", icon="check")
+
+                # Refresh the dropdown to include the new table
+                self.update_tables_dropdown()
+
+                # Close the event window
+                event_window.destroy()
+            except Exception as e:
+                # Handle any errors during table creation
+                CTkMessagebox(title="Event Creation Error", message=f"Error creating event: {str(e)}", icon="error")
+
+        # Add the submit button to the form
+        submit_button = CTk.CTkButton(event_window, text="Submit", command=event_create)
+        submit_button.pack(pady=5)
+
+    def redeem_points_button_clicked(self):
+        redeem_window = CTk.CTkToplevel()
+        redeem_window.title("Redeem Points")
+        redeem_window.geometry("400x300")
+        redeem_window.attributes('-topmost', False)
+        self.center_window(redeem_window)
+
+        rfid_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter RFID")
+        rfid_entry.pack(pady=5)
+
+        points_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter points to redeem")
+        points_entry.pack(pady=5)
+
+        def redeem_points():
+            rfid_num = rfid_entry.get().strip()
+            if not rfid_num:
+                CTkMessagebox(title="Redeem Points", message="RFID cannot be empty!", icon="error")
+                return
+            points = DBActions.get_member_points(rfid_num)
+            if points is None:
+                CTkMessagebox(title="Redeem Points", message="Member not found!", icon="error")
+                return
+            discount_20 = points * 0.20
+            discount_50 = points * 0.50
+            response = CTkMessagebox(title="Redeem Points", message=f"Points: {points}\n20% Discount: {discount_20}\n50% Discount: {discount_50}", icon="question", option_1="20%", option_2="50%")
+            if response.get() == "20%":
+                DBActions.redeem_points(rfid_num, discount_20)
+            elif response.get() == "50%":
+                DBActions.redeem_points(rfid_num, discount_50)
+            CTkMessagebox(title="Redeem Points", message="Points redeemed successfully!", icon="check")
+            redeem_window.destroy()
+
+        redeem_button = CTk.CTkButton(redeem_window, text="Redeem", command=redeem_points)
+        redeem_button.pack(pady=5)
+
+    def update_tables_dropdown(self):
+        # Check if the database exists or needs to be created
+        if not Database.db_exists():
+            # If the database doesn't exist, initialize it
+            Database.initialize_db()  # This creates the database and tables
+
+        # Fetch the list of tables, excluding the restricted 'Members' table
+        tables = DBActions.list_tables()
+        tables = [table for table in tables if table != 'Members']  # Exclude 'Members' table
+
+        # Debugging: Check the list of tables
+        ic(tables)  # This will print the list of tables for debugging
+
+        # Update the dropdown with the fetched tables
+        if tables:
+            self.table_dropdown.configure(values=tables)
+            if "Select a table" not in tables:
+                self.table_dropdown.set("Select a table")  # Set a default option
+        else:
+            # Handle the case where no tables are found
+            self.table_dropdown.configure(values=["No tables available"])
+            self.table_dropdown.set("No tables available")
+
+    def center_window(self, window):
+        window_width = window.winfo_width()
+        window_height = window.winfo_height()
+
+        # Get the screen width and height
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+
+        # Calculate the x and y coordinates to center the window
+        x = (screen_width // 2) - (window_width // 2)
+        y = (screen_height // 2) - (window_height // 2)
+
+        # Set the position of the window
+        window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
     def register_member_button_clicked(self):
         ic("register_member_button_clicked")
@@ -256,79 +378,6 @@ class RFIDApp:
         submit_button = CTk.CTkButton(register_window, text="Submit", command=member_register)
         submit_button.pack(pady=5)
 
-    def create_event_button_clicked(self):
-        # Create a new window with a form to create a new event
-        event_window = CTk.CTkToplevel()
-        event_window.title("Create Event")
-        event_window.geometry("400x300")
-        event_window.attributes('-topmost', False)  # Ensure the window is not always on top
-        event_window.resizable(False, False)  # Disable resizing
-        self.center_window(event_window)
-
-        # Create and place form fields
-        event_name_entry = CTk.CTkEntry(event_window, placeholder_text="Enter event name")
-        event_name_entry.pack(pady=5)
-
-        # Function to create the event and show confirmation
-        def event_create():
-            event_name = event_name_entry.get().strip()  # Get the event name and remove extra spaces
-
-            if not event_name:  # Check if the event name is empty
-                CTkMessagebox(title="Event Creation", message="Event name cannot be empty!", icon="error")
-                return
-
-            try:
-                # Create the event table
-                DBActions.create_event_table(event_name)
-                CTkMessagebox(title="Event Creation", message="Event Created!", icon="check")
-
-                # Refresh the dropdown to include the new table
-                self.update_tables_dropdown()
-
-                # Close the event window
-                event_window.destroy()
-            except Exception as e:
-                # Handle any errors during table creation
-                CTkMessagebox(title="Event Creation Error", message=f"Error creating event: {str(e)}", icon="error")
-
-        # Add the submit button to the form
-        submit_button = CTk.CTkButton(event_window, text="Submit", command=event_create)
-        submit_button.pack(pady=5)
-
-    def update_tables_dropdown(self):
-        # Check if the database exists or needs to be created
-        if not Database.db_exists():
-            # If the database doesn't exist, initialize it
-            Database.initialize_db()  # This creates the database and tables
-
-        # Fetch the list of tables, excluding the restricted 'Members' table
-        tables = DBActions.list_tables()
-        tables = [table for table in tables if table != 'Members']  # Exclude 'Members' table
-
-        # Debugging: Check the list of tables
-        ic(tables)  # This will print the list of tables for debugging
-
-        # Update the dropdown with the fetched tables
-        if tables:
-            self.table_dropdown.configure(values=tables)
-            if "Select a table" not in tables:
-                self.table_dropdown.set("Select a table")  # Set a default option
-        else:
-            # Handle the case where no tables are found
-            self.table_dropdown.configure(values=["No tables available"])
-            self.table_dropdown.set("No tables available")
-
-    def center_window(self, window):
-        window_width = window.winfo_width()
-        window_height = window.winfo_height()
-
-        # Get the screen width and height
-        screen_width = window.winfo_screenwidth()
-        screen_height = window.winfo_screenheight()
-
-        # Calculate the x and y coordinates to center the window
-        x = (screen_width // 2) - (window_width // 2)
-        y = (screen_height // 2) - (window_height // 2)
-
-        # Set the position of the window
-        window.geometry(f'{window_width}x{window_height}+{x}+{y}')
+if __name__ == "__main__":
+    app = RFIDApp()
+    app.run()

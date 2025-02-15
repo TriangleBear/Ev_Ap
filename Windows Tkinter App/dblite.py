@@ -127,6 +127,7 @@ class DBActions:
                 sql = "UPDATE Members SET points = points + ? WHERE rfid = ?"
                 cursor.execute(sql, (points, rfid))
                 conn.commit()
+                ic(f"Added {points} points to RFID {rfid}")  # Debugging line to confirm points addition
             return 0
         except Exception as e:
             ic(e)

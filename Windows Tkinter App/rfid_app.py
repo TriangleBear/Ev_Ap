@@ -159,7 +159,8 @@ class RFIDApp:
                 table_window.after(1000, messagebox2.destroy)  # Close the message box after 1 second
                 entry_widget.delete(0, CTk.END)
 
-                points = self.points_per_event.get(selected_table, 0)
+                points = self.points_per_event.get(selected_table, 0.10)  # Default to 0.10 if not set
+                ic(f"Adding {points} points to RFID {rfid_num} for event {selected_table}")  # Debugging line
                 DBActions.add_points(rfid_num, points)
 
         def refresh_data():
@@ -216,16 +217,9 @@ class RFIDApp:
         event_name_label = CTk.CTkLabel(event_window, text=f"Event Name: {event_name}")
         event_name_label.pack(pady=5)
 
-        points_label = CTk.CTkLabel(event_window, text="Select points for this event:")
-        points_label.pack(pady=5)
-
-        points_var = CTk.StringVar(value="0.10")
-        points_dropdown = CTk.CTkOptionMenu(event_window, variable=points_var, values=["0.10", "0.15", "0.20", "0.25", "0.30"])
-        points_dropdown.pack(pady=5)
-
         # Function to create the event and show confirmation
         def event_create():
-            points = float(points_var.get())
+            points = 0.10  # Set points to 0.10 by default
 
             try:
                 # Create the event table

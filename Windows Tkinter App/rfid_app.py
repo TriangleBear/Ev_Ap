@@ -159,7 +159,8 @@ class RFIDApp:
                 table_window.after(1000, messagebox2.destroy)  # Close the message box after 1 second
                 entry_widget.delete(0, CTk.END)
 
-                points = self.points_per_event.get(selected_table, 0)
+                points = self.points_per_event.get(selected_table, 0.10)  # Default to 0.10 if not set
+                ic(f"Adding {points} points to RFID {rfid_num} for event {selected_table}")  # Debugging line
                 DBActions.add_points(rfid_num, points)
 
         def refresh_data():

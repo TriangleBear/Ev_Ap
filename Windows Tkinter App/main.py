@@ -1,5 +1,5 @@
-from rfid_app import RFIDApp
+from rfid_app import MainApp
 
 if __name__ == "__main__":
-    app = RFIDApp()
+    app = MainApp()
     app.run()

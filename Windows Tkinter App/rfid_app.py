@@ -22,9 +22,18 @@ class MainApp:
         self.event_manager = EventManager(self)
         self.member_manager = MemberManager(self)
         self.table_manager = TableManager(self)
+        self.preload_data()
         self.create_widgets()
         self.update_tables_dropdown()
         self.center_window(self.root)
+
+    def preload_data(self):
+        self.preloaded_data = {}
+        tables = DBActions.list_tables()
+        for table in tables:
+            self.preloaded_data[table] = DBActions.fetch_table_data(table)
+        self.preloaded_data['Members'] = DBActions.fetch_table_data('Members')
+        ic(self.preloaded_data)
 
     def create_widgets(self):
         confirm_button = CTk.CTkButton(self.root, text="Confirm", command=lambda: self.confirm_button_clicked(self.table_var))
@@ -244,7 +253,7 @@ class TableManager:
         scrollable_frame = CTk.CTkScrollableFrame(table_window)
         scrollable_frame.pack(fill='both', expand=True)
 
-        data = DBActions.fetch_table_data(selected_table)
+        data = self.app.preloaded_data.get(selected_table, [])
 
         def display_data(filtered_data):
             for widget in scrollable_frame.winfo_children():
@@ -267,7 +276,7 @@ class TableManager:
             file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
             if not file_path:
                 return
-            df = pd.DataFrame(DBActions.fetch_table_data(selected_table))
+            df = pd.DataFrame(self.app.preloaded_data.get(selected_table, []))
             if file_path.endswith('.csv'):
                 df.to_csv(file_path, index=False)
             elif file_path.endswith('.xlsx'):
@@ -276,7 +285,7 @@ class TableManager:
         button_frame = CTk.CTkFrame(table_window)
         button_frame.pack(side='top', anchor='ne', padx=10, pady=10)
 
-        refresh_button = CTk.CTkButton(button_frame, text="Refresh", command=lambda: display_data(DBActions.fetch_table_data(selected_table)))
+        refresh_button = CTk.CTkButton(button_frame, text="Refresh", command=lambda: display_data(self.app.preloaded_data.get(selected_table, [])))
         refresh_button.pack(side='left', padx=5)
 
         export_button = CTk.CTkButton(button_frame, text="Export", command=export_to_file)
@@ -315,6 +324,7 @@ class TableManager:
 
         def refresh_data():
             updated_data = DBActions.fetch_table_data(selected_table)
+            self.app.preloaded_data[selected_table] = updated_data
             display_data(updated_data)
 
         self.app.member_manager.rfid_cache[rfid_num] = current_time

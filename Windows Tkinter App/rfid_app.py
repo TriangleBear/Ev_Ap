@@ -226,8 +226,9 @@ class TableManager:
     def create_table_window(self, selected_table):
         table_window = CTk.CTkToplevel()
         table_window.title(f"Event: {selected_table}")
-        table_window.geometry('600x600')
+        table_window.geometry('800x600')
         table_window.attributes('-topmost', False)
+        table_window.resizable(True, True)
 
         def search_table(event):
             query = search_entry.get().lower()
@@ -246,24 +247,15 @@ class TableManager:
         data = DBActions.fetch_table_data(selected_table)
 
         def display_data(filtered_data):
-            existing_widgets = scrollable_frame.winfo_children()
-            num_cells_needed = len(filtered_data) * len(filtered_data[0]) if filtered_data else 0
+            for widget in scrollable_frame.winfo_children():
+                widget.destroy()
 
-            while len(existing_widgets) < num_cells_needed:
-                cell = CTk.CTkLabel(scrollable_frame, text="", corner_radius=0, width=50)
-                existing_widgets.append(cell)
-
-            widget_index = 0
             for i, row in enumerate(filtered_data):
                 values = list(dict(row).values()) if isinstance(row, sqlite3.Row) else row
                 for j, cell_data in enumerate(values):
-                    cell = existing_widgets[widget_index]
-                    cell.configure(text=cell_data)
-                    cell.grid(row=i, column=j, padx=5, pady=5)
-                    widget_index += 1
-
-            for k in range(widget_index, len(existing_widgets)):
-                existing_widgets[k].grid_forget()
+                    cell = CTk.CTkLabel(scrollable_frame, text=cell_data, corner_radius=0, width=100, anchor='w')
+                    cell.grid(row=i, column=j, padx=5, pady=5, sticky='w')
+                    cell.bind("<Button-3>", lambda e, text=cell_data: self.copy_to_clipboard(text))
 
         display_data(data)
 
@@ -327,6 +319,11 @@ class TableManager:
 
         self.app.member_manager.rfid_cache[rfid_num] = current_time
         insert_digit(0)
+
+    def copy_to_clipboard(self, text):
+        self.app.root.clipboard_clear()
+        self.app.root.clipboard_append(text)
+        self.app.root.update()  # now it stays on the clipboard after the window is closed
 
 if __name__ == "__main__":
     app = MainApp()

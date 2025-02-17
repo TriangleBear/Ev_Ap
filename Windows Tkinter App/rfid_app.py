@@ -242,7 +242,7 @@ class TableManager:
         def search_table(event):
             query = search_entry.get().lower()
             filtered_data = [
-                row for row in data if any(query in str(cell).lower() for cell in dict(row).values()) or any(query in str(cell).lower() for cell in row)
+                row for row in data if any(query in str(cell).lower() for cell in row)
             ]
             display_data(filtered_data)
 

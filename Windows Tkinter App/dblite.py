@@ -159,6 +159,19 @@ class DBActions:
             ic(e)
             return -1
 
+    @staticmethod
+    def member_attended_event(table_name, rfid):
+        try:
+            with Database.get_db_connection() as conn:
+                cursor = conn.cursor()
+                sql = f"SELECT COUNT(*) FROM {table_name} WHERE rfid = ?"
+                cursor.execute(sql, (rfid,))
+                result = cursor.fetchone()
+            return result[0] > 0
+        except Exception as e:
+            ic(e)
+            return False
+
 
 class Database:
     @staticmethod

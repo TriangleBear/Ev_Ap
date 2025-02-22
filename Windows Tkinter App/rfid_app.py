@@ -303,6 +303,12 @@ class TableManager:
                 table_window.after(4500, messagebox1.destroy)
                 return
 
+        if DBActions.member_attended_event(selected_table, rfid_num):
+            messagebox2 = CTkMessagebox(title="RFID Scan", message="Member has already attended this event.", icon="warning")
+            table_window.after(4500, messagebox2.destroy)
+            entry_widget.delete(0, CTk.END)
+            return
+
         def insert_digit(index):
             if index < len(rfid_num):
                 member = DBActions.member_exists(rfid_num)

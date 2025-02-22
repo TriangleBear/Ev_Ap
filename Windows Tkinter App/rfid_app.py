@@ -5,6 +5,7 @@ from dblite import DBActions, Database
 import time
 import pandas as pd
 from customtkinter import filedialog
+import openpyxl
 from icecream import ic
 import os
 import sys

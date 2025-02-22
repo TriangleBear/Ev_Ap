@@ -5,6 +5,7 @@ from dblite import DBActions, Database
 import time
 import pandas as pd
 from customtkinter import filedialog
+import openpyxl
 from icecream import ic
 import os
 import sys
@@ -22,9 +23,18 @@ class MainApp:
         self.event_manager = EventManager(self)
         self.member_manager = MemberManager(self)
         self.table_manager = TableManager(self)
+        self.preload_data()
         self.create_widgets()
         self.update_tables_dropdown()
         self.center_window(self.root)
+
+    def preload_data(self):
+        self.preloaded_data = {}
+        tables = DBActions.list_tables()
+        for table in tables:
+            self.preloaded_data[table] = DBActions.fetch_table_data(table)
+        self.preloaded_data['Members'] = DBActions.fetch_table_data('Members')
+        ic(self.preloaded_data)
 
     def create_widgets(self):
         confirm_button = CTk.CTkButton(self.root, text="Confirm", command=lambda: self.confirm_button_clicked(self.table_var))
@@ -226,13 +236,14 @@ class TableManager:
     def create_table_window(self, selected_table):
         table_window = CTk.CTkToplevel()
         table_window.title(f"Event: {selected_table}")
-        table_window.geometry('600x600')
+        table_window.geometry('800x600')
         table_window.attributes('-topmost', False)
+        table_window.resizable(True, True)
 
         def search_table(event):
             query = search_entry.get().lower()
             filtered_data = [
-                row for row in data if any(query in str(cell).lower() for cell in dict(row).values()) or any(query in str(cell).lower() for cell in row)
+                row for row in data if any(query in str(cell).lower() for cell in row)
             ]
             display_data(filtered_data)
 
@@ -243,27 +254,18 @@ class TableManager:
         scrollable_frame = CTk.CTkScrollableFrame(table_window)
         scrollable_frame.pack(fill='both', expand=True)
 
-        data = DBActions.fetch_table_data(selected_table)
+        data = self.app.preloaded_data.get(selected_table, [])
 
         def display_data(filtered_data):
-            existing_widgets = scrollable_frame.winfo_children()
-            num_cells_needed = len(filtered_data) * len(filtered_data[0]) if filtered_data else 0
+            for widget in scrollable_frame.winfo_children():
+                widget.destroy()
 
-            while len(existing_widgets) < num_cells_needed:
-                cell = CTk.CTkLabel(scrollable_frame, text="", corner_radius=0, width=50)
-                existing_widgets.append(cell)
-
-            widget_index = 0
             for i, row in enumerate(filtered_data):
                 values = list(dict(row).values()) if isinstance(row, sqlite3.Row) else row
                 for j, cell_data in enumerate(values):
-                    cell = existing_widgets[widget_index]
-                    cell.configure(text=cell_data)
-                    cell.grid(row=i, column=j, padx=5, pady=5)
-                    widget_index += 1
-
-            for k in range(widget_index, len(existing_widgets)):
-                existing_widgets[k].grid_forget()
+                    cell = CTk.CTkLabel(scrollable_frame, text=cell_data, corner_radius=0, width=100, anchor='w')
+                    cell.grid(row=i, column=j, padx=5, pady=5, sticky='w')
+                    cell.bind("<Button-3>", lambda e, text=cell_data: self.copy_to_clipboard(text))
 
         display_data(data)
 
@@ -275,7 +277,7 @@ class TableManager:
             file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
             if not file_path:
                 return
-            df = pd.DataFrame(DBActions.fetch_table_data(selected_table))
+            df = pd.DataFrame(self.app.preloaded_data.get(selected_table, []))
             if file_path.endswith('.csv'):
                 df.to_csv(file_path, index=False)
             elif file_path.endswith('.xlsx'):
@@ -284,7 +286,7 @@ class TableManager:
         button_frame = CTk.CTkFrame(table_window)
         button_frame.pack(side='top', anchor='ne', padx=10, pady=10)
 
-        refresh_button = CTk.CTkButton(button_frame, text="Refresh", command=lambda: display_data(DBActions.fetch_table_data(selected_table)))
+        refresh_button = CTk.CTkButton(button_frame, text="Refresh", command=lambda: display_data(self.app.preloaded_data.get(selected_table, [])))
         refresh_button.pack(side='left', padx=5)
 
         export_button = CTk.CTkButton(button_frame, text="Export", command=export_to_file)
@@ -300,6 +302,12 @@ class TableManager:
                 messagebox1 = CTkMessagebox(title="RFID Scan", message=f"{rfid_num} was scanned within the last 15 seconds. Ignoring scan...", icon="warning")
                 table_window.after(4500, messagebox1.destroy)
                 return
+
+        if DBActions.member_attended_event(selected_table, rfid_num):
+            messagebox2 = CTkMessagebox(title="RFID Scan", message="Member has already attended this event.", icon="warning")
+            table_window.after(4500, messagebox2.destroy)
+            entry_widget.delete(0, CTk.END)
+            return
 
         def insert_digit(index):
             if index < len(rfid_num):
@@ -323,10 +331,16 @@ class TableManager:
 
         def refresh_data():
             updated_data = DBActions.fetch_table_data(selected_table)
+            self.app.preloaded_data[selected_table] = updated_data
             display_data(updated_data)
 
         self.app.member_manager.rfid_cache[rfid_num] = current_time
         insert_digit(0)
+
+    def copy_to_clipboard(self, text):
+        self.app.root.clipboard_clear()
+        self.app.root.clipboard_append(text)
+        self.app.root.update()  # now it stays on the clipboard after the window is closed
 
 if __name__ == "__main__":
     app = MainApp()

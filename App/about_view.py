@@ -13,7 +13,10 @@ class AboutView(CTk.CTkFrame):
         description_label = CTk.CTkLabel(self, text="This application is designed to manage event attendance and member points.")
         description_label.pack(pady=10)
 
-        version_label = CTk.CTkLabel(self, text="Version: 1.0.0")
+        creator_lable = CTk.CTkLabel(self, text="Created by: TriangleBear")
+        creator_lable.pack(pady=10)
+
+        version_label = CTk.CTkLabel(self, text="Version: 3.0.0")
         version_label.pack(pady=10)
 
         close_button = CTk.CTkButton(self, text="Close", command=self.close)

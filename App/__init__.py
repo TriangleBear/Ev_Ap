@@ -8,3 +8,16 @@ from .reports_view import ReportsView
 from .settings_view import SettingsView
 from .help_view import HelpView
 from .about_view import AboutView
+
+__all__ = [
+    "EventManager",
+    "MemberManager",
+    "TableManager",
+    "HomeView",
+    "EventsView",
+    "MembersView",
+    "ReportsView",
+    "SettingsView",
+    "HelpView",
+    "AboutView"
+]

@@ -1,5 +1,6 @@
 import customtkinter as CTk
 from dblite import DBActions
+import sqlite3
 
 class MembersView(CTk.CTkFrame):
     def __init__(self, parent, app):

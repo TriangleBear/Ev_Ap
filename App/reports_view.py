@@ -119,13 +119,15 @@ class ReportsView(CTk.CTkFrame):
         CTkMessagebox(title="Report Generated", message="Members summary report generated successfully.", icon="check")
         
     def redemption_report(self):
-        # Implement points redemption report generation
-        data = DBActions.fetch_table_data('Redemptions')
+        # Generate points redemption report using the points column in the Members table
+        data = DBActions.fetch_table_data('Members')
         if not data:
-            CTkMessagebox(title="No Data", message="No redemption data found.", icon="info")
+            CTkMessagebox(title="No Data", message="No member data found.", icon="info")
             return
         
         df = pd.DataFrame(data)
+        df = df[['rfid', 'memberid', 'name', 'points']]  # Select relevant columns
+        
         file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
         if not file_path:
             return

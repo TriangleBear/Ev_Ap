@@ -58,7 +58,7 @@ class SettingsView(CTk.CTkFrame):
             self.app.root.configure(bg=self.bg_color)
             self.save_color('bg_color', self.bg_color)
         if hasattr(self, 'fg_color'):
-            self.header.configure(fg=self.fg_color)
+            self.header.configure(text_color=self.fg_color)
             self.save_color('fg_color', self.fg_color)
 
     def save_color(self, color_type, color_value):
@@ -74,6 +74,6 @@ class SettingsView(CTk.CTkFrame):
                     if color_type == 'bg_color':
                         self.app.root.configure(bg=color_value)
                     elif color_type == 'fg_color':
-                        self.header.configure(fg=color_value)
+                        self.header.configure(text_color=color_value)
         except FileNotFoundError:
             pass

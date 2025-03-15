@@ -5,6 +5,7 @@ import pandas as pd
 import time
 from dblite import DBActions
 from icecream import ic
+import sqlite3
 
 class TableManager:
     def __init__(self, app):

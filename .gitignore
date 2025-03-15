@@ -161,3 +161,4 @@ cython_debug/
 creds.py
 dbActionsCloud.py
 *.db
+color_settings.txt

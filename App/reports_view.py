@@ -1,4 +1,8 @@
 import customtkinter as CTk
+from CTkMessagebox import CTkMessagebox
+from tkinter import filedialog
+import pandas as pd
+from dblite import DBActions
 
 class ReportsView(CTk.CTkFrame):
     def __init__(self, parent, app):
@@ -37,17 +41,159 @@ class ReportsView(CTk.CTkFrame):
             button.pack(anchor="e", padx=10, pady=10)
             
     def attendance_report(self):
-        # Implement attendance report generation
-        pass
+        # Generate attendance report for a specific event
+        tables = self.app.update_tables_dropdown()
+        if not tables:
+            CTkMessagebox(title="Warning", message="No events available. Please create an event first.", icon="warning")
+            return
+            
+        selection_dialog = CTk.CTkToplevel(self.app.root)
+        selection_dialog.title("Select Event")
+        selection_dialog.geometry("400x250")
+        selection_dialog.resizable(False, False)
+        selection_dialog.transient(self.app.root)
+        selection_dialog.grab_set()
+        
+        # Center the dialog
+        self.app.center_window(selection_dialog)
+        
+        CTk.CTkLabel(selection_dialog, text="Select an event for attendance report:", 
+                     font=CTk.CTkFont(size=16)).pack(padx=20, pady=(20, 10))
+        
+        event_var = CTk.StringVar()
+        event_option = CTk.CTkOptionMenu(
+            selection_dialog,
+            variable=event_var,
+            values=tables,
+            width=300
+        )
+        event_option.pack(padx=20, pady=20)
+        
+        if tables:
+            event_var.set(tables[0])
+        
+        def on_select():
+            selected_table = event_var.get()
+            if selected_table:
+                selection_dialog.destroy()
+                self.generate_attendance_report(selected_table)
+            else:
+                CTkMessagebox(title="Warning", message="Please select an event", icon="warning")
+                
+        CTk.CTkButton(selection_dialog, text="Generate Report", command=on_select).pack(padx=20, pady=20)
+        
+    def generate_attendance_report(self, event_name):
+        data = DBActions.fetch_table_data(event_name)
+        if not data:
+            CTkMessagebox(title="No Data", message="No attendance data found for this event.", icon="info")
+            return
+        
+        df = pd.DataFrame(data)
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+        if not file_path:
+            return
+        
+        if file_path.endswith('.csv'):
+            df.to_csv(file_path, index=False)
+        elif file_path.endswith('.xlsx'):
+            df.to_excel(file_path, index=False)
+        
+        CTkMessagebox(title="Report Generated", message="Attendance report generated successfully.", icon="check")
         
     def members_summary(self):
-        # Implement members summary report generation
-        pass
+        data = DBActions.fetch_table_data('Members')
+        if not data:
+            CTkMessagebox(title="No Data", message="No member data found.", icon="info")
+            return
+        
+        df = pd.DataFrame(data)
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+        if not file_path:
+            return
+        
+        if file_path.endswith('.csv'):
+            df.to_csv(file_path, index=False)
+        elif file_path.endswith('.xlsx'):
+            df.to_excel(file_path, index=False)
+        
+        CTkMessagebox(title="Report Generated", message="Members summary report generated successfully.", icon="check")
         
     def redemption_report(self):
         # Implement points redemption report generation
-        pass
+        data = DBActions.fetch_table_data('Redemptions')
+        if not data:
+            CTkMessagebox(title="No Data", message="No redemption data found.", icon="info")
+            return
+        
+        df = pd.DataFrame(data)
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+        if not file_path:
+            return
+        
+        if file_path.endswith('.csv'):
+            df.to_csv(file_path, index=False)
+        elif file_path.endswith('.xlsx'):
+            df.to_excel(file_path, index=False)
+        
+        CTkMessagebox(title="Report Generated", message="Points redemption report generated successfully.", icon="check")
         
     def export_data(self):
-        # Implement data export functionality
-        pass
+        # Export event or member data to CSV or Excel
+        tables = self.app.update_tables_dropdown()
+        tables.append('Members')
+        if not tables:
+            CTkMessagebox(title="Warning", message="No data available to export.", icon="warning")
+            return
+            
+        selection_dialog = CTk.CTkToplevel(self.app.root)
+        selection_dialog.title("Select Data to Export")
+        selection_dialog.geometry("400x250")
+        selection_dialog.resizable(False, False)
+        selection_dialog.transient(self.app.root)
+        selection_dialog.grab_set()
+        
+        # Center the dialog
+        self.app.center_window(selection_dialog)
+        
+        CTk.CTkLabel(selection_dialog, text="Select data to export:", 
+                     font=CTk.CTkFont(size=16)).pack(padx=20, pady=(20, 10))
+        
+        data_var = CTk.StringVar()
+        data_option = CTk.CTkOptionMenu(
+            selection_dialog,
+            variable=data_var,
+            values=tables,
+            width=300
+        )
+        data_option.pack(padx=20, pady=20)
+        
+        if tables:
+            data_var.set(tables[0])
+        
+        def on_select():
+            selected_table = data_var.get()
+            if selected_table:
+                selection_dialog.destroy()
+                self.export_selected_data(selected_table)
+            else:
+                CTkMessagebox(title="Warning", message="Please select data to export", icon="warning")
+                
+        CTk.CTkButton(selection_dialog, text="Export Data", command=on_select).pack(padx=20, pady=20)
+        
+    def export_selected_data(self, table_name):
+        data = DBActions.fetch_table_data(table_name)
+        if not data:
+            CTkMessagebox(title="No Data", message=f"No data found for {table_name}.", icon="info")
+            return
+        
+        df = pd.DataFrame(data)
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+        if not file_path:
+            return
+        
+        if file_path.endswith('.csv'):
+            df.to_csv(file_path, index=False)
+        elif file_path.endswith('.xlsx'):
+            df.to_excel(file_path, index=False)
+        
+        CTkMessagebox(title="Data Exported", message=f"{table_name} data exported successfully.", icon="check")

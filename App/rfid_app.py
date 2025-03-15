@@ -1,15 +1,6 @@
 import customtkinter as CTk
-from CTkMessagebox import CTkMessagebox
-from tkinter import PhotoImage
 from dblite import DBActions, Database
-import time
-import pandas as pd
-from customtkinter import filedialog
-import openpyxl
 from icecream import ic
-import os
-import sys
-import sqlite3
 
 from event_manager import EventManager
 from member_manager import MemberManager

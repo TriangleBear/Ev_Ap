@@ -119,8 +119,8 @@ class ReportsView(CTk.CTkFrame):
         CTkMessagebox(title="Report Generated", message="Members summary report generated successfully.", icon="check")
         
     def redemption_report(self):
-        # Generate points redemption report using the points column in the Members table
-        data = DBActions.fetch_table_data('Members')
+        # Implement points redemption report generation
+        data = DBActions.fetch_point_data('Members')
         if not data:
             CTkMessagebox(title="No Data", message="No member data found.", icon="info")
             return

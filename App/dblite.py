@@ -87,6 +87,19 @@ class DBActions:
             ic(e)
 
     @staticmethod
+    def fetch_point_data(table_name):
+        try:
+            with Database.get_db_connection() as conn:
+                cursor = conn.cursor()
+                sql = f"SELECT name, points FROM {table_name}"
+                cursor.execute(sql)
+                result = cursor.fetchall()
+            return [{'name': row['name'], 'points': row['points']} for row in result]
+        except Exception as e:
+            ic(e)
+            return []
+
+    @staticmethod
     def attendance_member_event(table_name, rfid):
         try:
             member = DBActions.member_exists(rfid)

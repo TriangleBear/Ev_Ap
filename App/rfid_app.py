@@ -196,7 +196,3 @@ class MainApp:
         tables = [table for table in tables if table != 'Members']
         ic(tables)
         return tables
-
-if __name__ == "__main__":
-    app = MainApp()
-    run()

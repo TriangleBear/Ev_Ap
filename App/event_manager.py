@@ -25,10 +25,10 @@ class EventManager:
                 CTkMessagebox(title="Create Event", message="No event name provided.", icon="error")
 
     def create_event_window(self, event_name):
-        event_window = CTk.CTkToplevel()
+        event_window = CTk.CTkToplevel(self.app.root)
         event_window.title("Create Event")
         event_window.geometry("400x300")
-        event_window.attributes('-topmost', False)
+        event_window.attributes('-topmost', True)
         event_window.resizable(False, False)
         self.app.center_window(event_window)
 

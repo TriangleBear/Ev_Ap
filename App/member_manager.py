@@ -10,10 +10,10 @@ class MemberManager:
 
     def register_member_button_clicked(self):
         ic("register_member_button_clicked")
-        register_window = CTk.CTkToplevel()
+        register_window = CTk.CTkToplevel(self.app.root)
         register_window.title("Register New Member")
         register_window.geometry("400x300")
-        register_window.attributes('-topmost', False)
+        register_window.attributes('-topmost', True)
         register_window.resizable(False, False)
         self.app.center_window(register_window)
 
@@ -63,10 +63,11 @@ class MemberManager:
         submit_button.pack(pady=5)
 
     def redeem_points_button_clicked(self):
-        redeem_window = CTk.CTkToplevel()
+        redeem_window = CTk.CTkToplevel(self.app.root)
         redeem_window.title("Redeem Points")
         redeem_window.geometry("400x300")
-        redeem_window.attributes('-topmost', False)
+        redeem_window.attributes('-topmost', True)
+        redeem_window.resizable(False, False)
         self.app.center_window(redeem_window)
 
         rfid_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter RFID")

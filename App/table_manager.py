@@ -12,10 +12,10 @@ class TableManager:
         self.app = app
 
     def create_table_window(self, selected_table):
-        table_window = CTk.CTkToplevel()
+        table_window = CTk.CTkToplevel(self.app.root)
         table_window.title(f"Event: {selected_table}")
         table_window.geometry('800x600')
-        table_window.attributes('-topmost', False)
+        table_window.attributes('-topmost', True)
         table_window.resizable(True, True)
 
         def search_table(event):

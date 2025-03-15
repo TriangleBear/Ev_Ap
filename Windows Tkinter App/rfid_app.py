@@ -11,22 +11,163 @@ import os
 import sys
 import sqlite3
 
+from event_manager import EventManager
+from member_manager import MemberManager
+from table_manager import TableManager
+from home_view import HomeView
+from events_view import EventsView
+from members_view import MembersView
+from reports_view import ReportsView
+from settings_view import SettingsView
+from help_view import HelpView
+from about_view import AboutView
+
 class MainApp:
     def __init__(self):
         self.root = CTk.CTk()
-        self.root.title("Events Attendance")
-        self.root.geometry("400x350")
-        self.root.resizable(False, False)
-        self.table_var = CTk.StringVar(value="Select a table")
-        self.table_dropdown = CTk.CTkOptionMenu(self.root, variable=self.table_var, values=[])
-        self.table_dropdown.pack(pady=20)
+        self.root.title("Events Attendance System")
+        self.root.geometry("1100x650")
+        self.root.resizable(True, True)
+        
+        # Set default appearance mode and theme
+        CTk.set_appearance_mode("System")  # "System", "Dark", "Light"
+        CTk.set_default_color_theme("blue")  # "blue", "green", "dark-blue"
+        
+        # Initialize managers before creating UI
         self.event_manager = EventManager(self)
         self.member_manager = MemberManager(self)
         self.table_manager = TableManager(self)
+        
+        # Create the main layout with navigation and content areas
+        self.create_layout()
+        
+        # Preload data
         self.preload_data()
-        self.create_widgets()
-        self.update_tables_dropdown()
+        
+        # Center the window
         self.center_window(self.root)
+
+    def create_layout(self):
+        # Create main layout with two frames: sidebar and content area
+        self.sidebar_frame = CTk.CTkFrame(self.root, width=200, corner_radius=0)
+        self.sidebar_frame.pack(side="left", fill="y", padx=0, pady=0)
+        self.sidebar_frame.pack_propagate(False)  # Don't shrink
+
+        self.content_frame = CTk.CTkFrame(self.root)
+        self.content_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+        # Create application title in sidebar
+        self.app_title = CTk.CTkLabel(self.sidebar_frame, text="AHO RFID App", font=CTk.CTkFont(size=20, weight="bold"))
+        self.app_title.pack(padx=20, pady=(20, 10))
+        
+        # Create sidebar divider
+        self.sidebar_divider1 = CTk.CTkFrame(self.sidebar_frame, height=1, width=160)
+        self.sidebar_divider1.pack(pady=(5, 10))
+        
+        # Create navigation buttons
+        self.nav_buttons = {}
+        
+        self.nav_buttons["home"] = self.create_nav_button("Home", self.show_home_view)
+        self.nav_buttons["events"] = self.create_nav_button("Events", self.show_events_view)
+        self.nav_buttons["members"] = self.create_nav_button("Members", self.show_members_view)
+        self.nav_buttons["reports"] = self.create_nav_button("Reports", self.show_reports_view)
+        
+        # Create sidebar divider
+        self.sidebar_divider2 = CTk.CTkFrame(self.sidebar_frame, height=1, width=160)
+        self.sidebar_divider2.pack(pady=10)
+        
+        self.nav_buttons["settings"] = self.create_nav_button("Settings", self.show_settings_view)
+        self.nav_buttons["help"] = self.create_nav_button("Help", self.show_help_view)
+        self.nav_buttons["about"] = self.create_nav_button("About", self.show_about_view)
+        
+        # Create appearance mode toggle
+        self.appearance_mode_label = CTk.CTkLabel(self.sidebar_frame, text="Appearance Mode:")
+        self.appearance_mode_label.pack(padx=20, pady=(20, 0))
+        
+        self.appearance_mode_menu = CTk.CTkOptionMenu(
+            self.sidebar_frame, 
+            values=["Light", "Dark", "System"],
+            command=self.change_appearance_mode
+        )
+        self.appearance_mode_menu.pack(padx=20, pady=10)
+        self.appearance_mode_menu.set("System")
+        
+        # Create all view frames but show only home initially
+        self.create_view_frames()
+        self.show_home_view()
+
+    def create_nav_button(self, text, command):
+        button = CTk.CTkButton(
+            self.sidebar_frame, 
+            text=text, 
+            fg_color="transparent", 
+            anchor="w",
+            command=command,
+            font=CTk.CTkFont(size=14),
+            hover_color=("gray75", "gray25"),
+            height=40
+        )
+        button.pack(padx=20, pady=5, fill="x")
+        return button
+        
+    def create_view_frames(self):
+        # Create frames for each view
+        self.home_frame = HomeView(self.content_frame, self)
+        self.events_frame = EventsView(self.content_frame, self)
+        self.members_frame = MembersView(self.content_frame, self)
+        self.reports_frame = ReportsView(self.content_frame, self)
+        self.settings_frame = SettingsView(self.content_frame, self)
+        self.help_frame = HelpView(self.content_frame, self)
+        self.about_frame = AboutView(self.content_frame, self)
+        
+        self.frames = {
+            "home": self.home_frame,
+            "events": self.events_frame,
+            "members": self.members_frame,
+            "reports": self.reports_frame,
+            "settings": self.settings_frame,
+            "help": self.help_frame,
+            "about": self.about_frame
+        }
+
+    def show_frame(self, frame_name):
+        # Hide all frames
+        for frame in self.frames.values():
+            frame.pack_forget()
+        
+        # Show the selected frame
+        self.frames[frame_name].pack(fill="both", expand=True)
+        
+        # Update active button styling
+        for name, button in self.nav_buttons.items():
+            if name == frame_name:
+                button.configure(fg_color=("gray75", "gray25"))
+            else:
+                button.configure(fg_color="transparent")
+
+    def show_home_view(self):
+        self.show_frame("home")
+        
+    def show_events_view(self):
+        self.show_frame("events")
+        
+    def show_members_view(self):
+        self.show_frame("members")
+        
+    def show_reports_view(self):
+        self.show_frame("reports")
+        
+    def show_settings_view(self):
+        self.show_frame("settings")
+        
+    def show_help_view(self):
+        self.show_frame("help")
+        
+    def show_about_view(self):
+        self.show_frame("about")
+        
+    def change_appearance_mode(self, new_appearance_mode):
+        CTk.set_appearance_mode(new_appearance_mode)
 
     def preload_data(self):
         self.preloaded_data = {}
@@ -36,49 +177,8 @@ class MainApp:
         self.preloaded_data['Members'] = DBActions.fetch_table_data('Members')
         ic(self.preloaded_data)
 
-    def create_widgets(self):
-        confirm_button = CTk.CTkButton(self.root, text="Confirm", command=lambda: self.confirm_button_clicked(self.table_var))
-        confirm_button.pack(pady=20)
-
-        create_event_button = CTk.CTkButton(self.root, text="Create Event", command=self.event_manager.create_event_button_clicked)
-        create_event_button.pack(pady=20)
-
-        show_memmbers_button = CTk.CTkButton(self.root, text="Show Members", command=lambda: self.table_manager.create_table_window("Members"))
-        show_memmbers_button.pack(pady=20)
-
-        register_member_button = CTk.CTkButton(self.root, text="Register Member", command=self.member_manager.register_member_button_clicked)
-        register_member_button.pack(pady=20)
-
-        redeem_points_button = CTk.CTkButton(self.root, text="Redeem Points", command=self.member_manager.redeem_points_button_clicked)
-        redeem_points_button.pack(pady=20)
-
     def run(self):
         self.root.mainloop()
-
-    def confirm_button_clicked(self, table_var):
-        selected_table = table_var.get()
-        if not selected_table:
-            CTkMessagebox(title="Warning", message="No table selected", icon="warning")
-        elif selected_table == "Select a table":
-            CTkMessagebox(title="Warning", message="Please select a table", icon="warning")
-        elif selected_table == "Members":
-            CTkMessagebox(title="Warning", message="The 'Members' table cannot be selected", icon="warning")
-        else:
-            self.table_manager.create_table_window(selected_table)
-
-    def update_tables_dropdown(self):
-        if not Database.db_exists():
-            Database.initialize_db()
-        tables = DBActions.list_tables()
-        tables = [table for table in tables if table != 'Members']
-        ic(tables)
-        if tables:
-            self.table_dropdown.configure(values=tables)
-            if "Select a table" not in tables:
-                self.table_dropdown.set("Select a table")
-        else:
-            self.table_dropdown.configure(values=["No tables available"])
-            self.table_dropdown.set("No tables available")
 
     def center_window(self, window):
         window_width = window.winfo_width()
@@ -88,259 +188,14 @@ class MainApp:
         x = (screen_width // 2) - (window_width // 2)
         y = (screen_height // 2) - (window_height // 2)
         window.geometry(f'{window_width}x{window_height}+{x}+{y}')
-
-class EventManager:
-    def __init__(self, app):
-        self.app = app
-        self.points_per_event = {}
-
-    def create_event_button_clicked(self):
-        ic("create_event_button_clicked")
-        response = CTkMessagebox(title="Create Event", message="Are you sure you want to create a new event?", icon="question", option_1="Yes", option_2="No")
-        if response.get() == "No":
-            ic("User cancelled event creation")
-            return
-        elif response.get() == "Yes":
-            dialog = CTk.CTkInputDialog(title="Create Event Name", text="Enter the name for the new event:")
-            event_name = dialog.get_input()
-            if event_name:
-                ic(f"Creating new event '{event_name}'...")
-                self.create_event_window(event_name)
-            else:
-                ic("No event name provided. Exiting...")
-                CTkMessagebox(title="Create Event", message="No event name provided.", icon="error")
-
-    def create_event_window(self, event_name):
-        event_window = CTk.CTkToplevel()
-        event_window.title("Create Event")
-        event_window.geometry("400x300")
-        event_window.attributes('-topmost', False)
-        event_window.resizable(False, False)
-        self.app.center_window(event_window)
-
-        event_name_label = CTk.CTkLabel(event_window, text=f"Event Name: {event_name}")
-        event_name_label.pack(pady=5)
-
-        def event_create():
-            points = 0.10
-            try:
-                DBActions.create_event_table(event_name)
-                self.points_per_event[event_name] = points
-                CTkMessagebox(title="Event Creation", message="Event Created!", icon="check")
-                self.app.update_tables_dropdown()
-                event_window.destroy()
-            except Exception as e:
-                CTkMessagebox(title="Event Creation Error", message=f"Error creating event: {str(e)}", icon="error")
-
-        submit_button = CTk.CTkButton(event_window, text="Submit", command=event_create)
-        submit_button.pack(pady=5)
-
-class MemberManager:
-    def __init__(self, app):
-        self.app = app
-        self.rfid_cache = {}
-
-    def register_member_button_clicked(self):
-        ic("register_member_button_clicked")
-        register_window = CTk.CTkToplevel()
-        register_window.title("Register New Member")
-        register_window.geometry("400x300")
-        register_window.attributes('-topmost', False)
-        register_window.resizable(False, False)
-        self.app.center_window(register_window)
-
-        memberid_entry = CTk.CTkEntry(register_window, placeholder_text="Enter member ID")
-        memberid_entry.pack(pady=5)
-
-        name_entry = CTk.CTkEntry(register_window, placeholder_text="Enter name")
-        name_entry.pack(pady=5)
-
-        student_num_entry = CTk.CTkEntry(register_window, placeholder_text="Enter student number")
-        student_num_entry.pack(pady=5)
-
-        program_entry = CTk.CTkEntry(register_window, placeholder_text="Enter program")
-        program_entry.pack(pady=5)
-
-        year_entry = CTk.CTkEntry(register_window, placeholder_text="Enter year")
-        year_entry.pack(pady=5)
-
-        rfid_entry = CTk.CTkEntry(register_window, placeholder_text="Scan RFID")
-        rfid_entry.pack(pady=5)
-
-        def member_register():
-            rfid_num = rfid_entry.get()
-            member_id = memberid_entry.get()
-            member_name = name_entry.get()
-            student_num = student_num_entry.get()
-            program = program_entry.get()
-            year = year_entry.get()
-            print(f"RFID: {rfid_num}")
-            print(f"Member ID: {member_id}")
-            print(f"Name: {member_name}")
-            print(f"Student Number: {student_num}")
-            print(f"Program: {program}")
-            print(f"Year: {year}")
-
-            if DBActions.member_exists(rfid_num):
-                ic("Member already exists!")
-                CTkMessagebox(title="Member Registration", message="Member already exists!", icon="error")
-                register_window.after(300, register_window.destroy)
-            else:
-                ic("Registering new member...")
-                DBActions.member_register(rfid_num, member_id, member_name, student_num, program, year)
-                CTkMessagebox(title="Member Registration", message="Member Registered!", icon="check")
-                register_window.after(300, register_window.destroy)
-
-        submit_button = CTk.CTkButton(register_window, text="Submit", command=member_register)
-        submit_button.pack(pady=5)
-
-    def redeem_points_button_clicked(self):
-        redeem_window = CTk.CTkToplevel()
-        redeem_window.title("Redeem Points")
-        redeem_window.geometry("400x300")
-        redeem_window.attributes('-topmost', False)
-        self.app.center_window(redeem_window)
-
-        rfid_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter RFID")
-        rfid_entry.pack(pady=5)
-
-        points_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter points to redeem")
-        points_entry.pack(pady=5)
-
-        def redeem_points():
-            rfid_num = rfid_entry.get().strip()
-            if not rfid_num:
-                CTkMessagebox(title="Redeem Points", message="RFID cannot be empty!", icon="error")
-                return
-            points = DBActions.get_member_points(rfid_num)
-            if points is None:
-                CTkMessagebox(title="Redeem Points", message="Member not found!", icon="error")
-                return
-            discount_20 = points * 0.20
-            discount_50 = points * 0.50
-            response = CTkMessagebox(title="Redeem Points", message=f"Points: {points}\n20% Discount: {discount_20}\n50% Discount: {discount_50}", icon="question", option_1="20%", option_2="50%")
-            if response.get() == "20%":
-                DBActions.redeem_points(rfid_num, discount_20)
-            elif response.get() == "50%":
-                DBActions.redeem_points(rfid_num, discount_50)
-            CTkMessagebox(title="Redeem Points", message="Points redeemed successfully!", icon="check")
-            redeem_window.destroy()
-
-        redeem_button = CTk.CTkButton(redeem_window, text="Redeem", command=redeem_points)
-        redeem_button.pack(pady=5)
-
-class TableManager:
-    def __init__(self, app):
-        self.app = app
-
-    def create_table_window(self, selected_table):
-        table_window = CTk.CTkToplevel()
-        table_window.title(f"Event: {selected_table}")
-        table_window.geometry('800x600')
-        table_window.attributes('-topmost', False)
-        table_window.resizable(True, True)
-
-        def search_table(event):
-            query = search_entry.get().lower()
-            filtered_data = [
-                row for row in data if any(query in str(cell).lower() for cell in row)
-            ]
-            display_data(filtered_data)
-
-        search_entry = CTk.CTkEntry(table_window)
-        search_entry.pack(padx=10, pady=10, fill='x')
-        search_entry.bind('<KeyRelease>', search_table)
-
-        scrollable_frame = CTk.CTkScrollableFrame(table_window)
-        scrollable_frame.pack(fill='both', expand=True)
-
-        data = self.app.preloaded_data.get(selected_table, [])
-
-        def display_data(filtered_data):
-            for widget in scrollable_frame.winfo_children():
-                widget.destroy()
-
-            for i, row in enumerate(filtered_data):
-                values = list(dict(row).values()) if isinstance(row, sqlite3.Row) else row
-                for j, cell_data in enumerate(values):
-                    cell = CTk.CTkLabel(scrollable_frame, text=cell_data, corner_radius=0, width=100, anchor='w')
-                    cell.grid(row=i, column=j, padx=5, pady=5, sticky='w')
-                    cell.bind("<Button-3>", lambda e, text=cell_data: self.copy_to_clipboard(text))
-
-        display_data(data)
-
-        rfid_entry = CTk.CTkEntry(table_window)
-        rfid_entry.pack(padx=10, pady=10, fill='x')
-        rfid_entry.bind('<Return>', lambda event: self.rfid_scan_event(rfid_entry, table_window, selected_table, display_data, data))
-
-        def export_to_file():
-            file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
-            if not file_path:
-                return
-            df = pd.DataFrame(self.app.preloaded_data.get(selected_table, []))
-            if file_path.endswith('.csv'):
-                df.to_csv(file_path, index=False)
-            elif file_path.endswith('.xlsx'):
-                df.to_excel(file_path, index=False)
-
-        button_frame = CTk.CTkFrame(table_window)
-        button_frame.pack(side='top', anchor='ne', padx=10, pady=10)
-
-        refresh_button = CTk.CTkButton(button_frame, text="Refresh", command=lambda: display_data(self.app.preloaded_data.get(selected_table, [])))
-        refresh_button.pack(side='left', padx=5)
-
-        export_button = CTk.CTkButton(button_frame, text="Export", command=export_to_file)
-        export_button.pack(side='left', padx=5)
-
-    def rfid_scan_event(self, entry_widget, table_window, selected_table, display_data, data):
-        rfid_num = entry_widget.get()
-
-        current_time = time.time()
-        if rfid_num in self.app.member_manager.rfid_cache:
-            last_scan_time = self.app.member_manager.rfid_cache[rfid_num]
-            if current_time - last_scan_time < 15:
-                messagebox1 = CTkMessagebox(title="RFID Scan", message=f"{rfid_num} was scanned within the last 15 seconds. Ignoring scan...", icon="warning")
-                table_window.after(4500, messagebox1.destroy)
-                return
-
-        if DBActions.member_attended_event(selected_table, rfid_num):
-            messagebox2 = CTkMessagebox(title="RFID Scan", message="Member has already attended this event.", icon="warning")
-            table_window.after(4500, messagebox2.destroy)
-            entry_widget.delete(0, CTk.END)
-            return
-
-        def insert_digit(index):
-            if index < len(rfid_num):
-                member = DBActions.member_exists(rfid_num)
-                if not member:
-                    messagebox2 = CTkMessagebox(title="RFID Scan Error", message="RFID number not found", icon="cancel")
-                    table_window.after(1000, messagebox2.destroy)
-                    entry_widget.delete(0, CTk.END)
-                    return
-
-                entry_widget.insert(CTk.END, rfid_num[index])
-                DBActions.attendance_member_event(selected_table, rfid_num)
-                refresh_data()
-                messagebox2 = CTkMessagebox(title="RFID Scan", message="RFID recorded", icon="check")
-                table_window.after(1000, messagebox2.destroy)
-                entry_widget.delete(0, CTk.END)
-
-                points = self.app.event_manager.points_per_event.get(selected_table, 0.10)
-                ic(f"Adding {points} points to RFID {rfid_num} for event {selected_table}")
-                DBActions.add_points(rfid_num, points)
-
-        def refresh_data():
-            updated_data = DBActions.fetch_table_data(selected_table)
-            self.app.preloaded_data[selected_table] = updated_data
-            display_data(updated_data)
-
-        self.app.member_manager.rfid_cache[rfid_num] = current_time
-        insert_digit(0)
-
-    def copy_to_clipboard(self, text):
-        self.app.root.clipboard_clear()
-        self.app.root.clipboard_append(text)
-        self.app.root.update()  # now it stays on the clipboard after the window is closed
+        
+    def update_tables_dropdown(self):
+        if not Database.db_exists():
+            Database.initialize_db()
+        tables = DBActions.list_tables()
+        tables = [table for table in tables if table != 'Members']
+        ic(tables)
+        return tables
 
 if __name__ == "__main__":
     app = MainApp()

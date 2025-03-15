@@ -121,6 +121,7 @@ class ReportsView(CTk.CTkFrame):
     def redemption_report(self):
         # Implement points redemption report generation
         data = DBActions.fetch_point_data('Members')
+
         if not data:
             CTkMessagebox(title="No Data", message="No member data found.", icon="info")
             return

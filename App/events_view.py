@@ -1,5 +1,4 @@
 import customtkinter as CTk
-from dblite import DBActions
 
 class EventsView(CTk.CTkFrame):
     def __init__(self, parent, app):

@@ -1,5 +1,7 @@
 import customtkinter as CTk
-# from tkinter.colorchooser import askcolor
+from creds import CLOUD_DB_HOST, CLOUD_DB_PORT, CLOUD_DB_NAME
+from dblite import Database, DBActions  # Add DBActions to the import
+from CTkMessagebox import CTkMessagebox  # Add this import for message box
 
 class SettingsView(CTk.CTkFrame):
     def __init__(self, parent, app):
@@ -11,11 +13,9 @@ class SettingsView(CTk.CTkFrame):
         self.header = CTk.CTkLabel(self, text="Settings", font=CTk.CTkFont(size=24, weight="bold"))
         self.header.pack(pady=20)
         
-        # Settings options
         self.options_frame = CTk.CTkFrame(self)
         self.options_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Appearance mode setting
         appearance_label = CTk.CTkLabel(self.options_frame, text="Appearance Mode:", font=CTk.CTkFont(size=18))
         appearance_label.pack(anchor="w", padx=10, pady=10)
         
@@ -27,53 +27,85 @@ class SettingsView(CTk.CTkFrame):
         self.appearance_mode_menu.pack(anchor="w", padx=10, pady=10)
         self.appearance_mode_menu.set("System")
         
-        # Color customization settings
-        # color_label = CTk.CTkLabel(self.options_frame, text="Customize Colors:", font=CTk.CTkFont(size=18))
-        # color_label.pack(anchor="w", padx=10, pady=10)
+        db_label = CTk.CTkLabel(self.options_frame, text="Database Mode:", font=CTk.CTkFont(size=18))
+        db_label.pack(anchor="w", padx=10, pady=10)
         
-        # self.bg_color_button = CTk.CTkButton(self.options_frame, text="Background Color", command=self.choose_bg_color)
-        # self.bg_color_button.pack(anchor="w", padx=10, pady=5)
+        self.db_mode_menu = CTk.CTkOptionMenu(
+            self.options_frame, 
+            values=["SQLite", "Cloud"],
+            command=self.change_db_mode
+        )
+        self.db_mode_menu.pack(anchor="w", padx=10, pady=10)
+        self.db_mode_menu.set("SQLite")
         
-        # self.fg_color_button = CTk.CTkButton(self.options_frame, text="Foreground Color", command=self.choose_fg_color)
-        # self.fg_color_button.pack(anchor="w", padx=10, pady=5)
+        self.cloud_creds_frame = CTk.CTkFrame(self.options_frame)
+        self.cloud_creds_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # self.apply_button = CTk.CTkButton(self.options_frame, text="Apply Colors", command=self.apply_colors)
-        # self.apply_button.pack(anchor="w", padx=10, pady=20)
+        cloud_user_label = CTk.CTkLabel(self.cloud_creds_frame, text="Cloud DB User:")
+        cloud_user_label.pack(anchor="w", padx=10, pady=5)
+        self.cloud_user_entry = CTk.CTkEntry(self.cloud_creds_frame)
+        self.cloud_user_entry.pack(anchor="w", padx=10, pady=5)
         
-        # Load saved colors
-        # self.load_colors()
+        cloud_password_label = CTk.CTkLabel(self.cloud_creds_frame, text="Cloud DB Password:")
+        cloud_password_label.pack(anchor="w", padx=10, pady=5)
+        self.cloud_password_entry = CTk.CTkEntry(self.cloud_creds_frame, show="*")
+        self.cloud_password_entry.pack(anchor="w", padx=10, pady=5)
+        
+        self.apply_button = CTk.CTkButton(self.options_frame, text="Apply", command=self.apply_db_settings)
+        self.apply_button.pack(anchor="w", padx=10, pady=20)
+        
+        self.cloud_creds_frame.pack_forget()  # Hide cloud creds frame initially
 
-    # def choose_bg_color(self):
-    #     color = askcolor()[1]
-    #     if color:
-    #         self.bg_color = color
+    def change_db_mode(self, mode):
+        if mode == "Cloud":
+            self.cloud_creds_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        else:
+            self.cloud_creds_frame.pack_forget()
 
-    # def choose_fg_color(self):
-    #     color = askcolor()[1]
-    #     if color:
-    #         self.fg_color = color
-
-    # def apply_colors(self):
-    #     if hasattr(self, 'bg_color'):
-    #         self.app.root.configure(bg=self.bg_color)
-    #         self.save_color('bg_color', self.bg_color)
-    #     if hasattr(self, 'fg_color'):
-    #         self.header.configure(text_color=self.fg_color)
-    #         self.save_color('fg_color', self.fg_color)
-
-    # def save_color(self, color_type, color_value):
-    #     with open('color_settings.txt', 'w') as file:
-    #         file.write(f'{color_type}:{color_value}\n')
-
-    # def load_colors(self):
-    #     try:
-    #         with open('color_settings.txt', 'r') as file:
-    #             lines = file.readlines()
-    #             for line in lines:
-    #                 color_type, color_value = line.strip().split(':')
-    #                 if color_type == 'bg_color':
-    #                     self.app.root.configure(bg=color_value)
-    #                 elif color_type == 'fg_color':
-    #                     self.header.configure(text_color=color_value)
-    #     except FileNotFoundError:
-    #         pass
+    def apply_db_settings(self):
+        db_mode = self.db_mode_menu.get()
+        
+        # Initialize progress bar
+        progress_bar = CTk.CTkProgressBar(self, mode='indeterminate')
+        progress_bar.pack(side='bottom', pady=20)
+        progress_bar.start()
+        
+        if db_mode == "Cloud":
+            # Backup SQLite data to cloud before switching
+            sqlite_db = Database(use_cloud=False)
+            sqlite_data = sqlite_db.db.fetch_all_data()
+            
+            cloud_user = self.cloud_user_entry.get()
+            cloud_password = self.cloud_password_entry.get()
+            try:
+                self.app.database = Database(use_cloud=True, cloud_user=cloud_user, cloud_password=cloud_password, app=self.app)
+                # Set the database instance for DBActions
+                DBActions.set_db_instance(self.app.database)
+                for table_name, data in sqlite_data.items():
+                    self.app.database.db.insert_data(table_name, data)
+            except Exception as e:
+                CTkMessagebox(title="Database Connection Error", message=f"Failed to connect to cloud database: {str(e)}")
+                progress_bar.stop()
+                progress_bar.pack_forget()
+                return
+        else:
+            # Specify additional tables to copy if needed
+            # additional_tables = ['Events', 'Attendance']  # Example additional tables
+            # self.app.database.backup_cloud_to_sqlite(tables_to_copy=additional_tables)
+            self.app.database = Database(use_cloud=False, app=self.app)
+            # Set the database instance for DBActions
+            DBActions.set_db_instance(self.app.database)
+        
+        self.app.database.initialize_db()
+        self.app.update_db_status_label()  # Update the database status label
+        
+        # Stop and hide progress bar after switching
+        progress_bar.stop()
+        progress_bar.pack_forget()
+        
+        # Show confirmation message that database mode has changed
+        CTkMessagebox(
+            title="Database Mode Changed",
+            message=f"Database mode has been successfully changed to {'Cloud MySQL' if db_mode == 'Cloud' else 'SQLite'}.",
+            icon="check"
+        )

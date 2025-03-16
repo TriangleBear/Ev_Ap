@@ -1,17 +1,24 @@
 import sqlite3
 import os
+import time
 
 class SQLiteDB:
-    def get_db_connection(self):
+    def get_db_connection(self, timeout=None):
         db_path = 'AHO_MEMBER.db'
         if not os.path.exists(db_path):
             open(db_path, 'w').close()
-        ahodb = sqlite3.connect(db_path)
+        
+        # Apply timeout if specified
+        if timeout is not None:
+            ahodb = sqlite3.connect(db_path, timeout=timeout)
+        else:
+            ahodb = sqlite3.connect(db_path)
+            
         ahodb.row_factory = sqlite3.Row
         return ahodb
 
-    def initialize_db(self):
-        conn = self.get_db_connection()
+    def initialize_db(self, timeout=None):
+        conn = self.get_db_connection(timeout)
         cursor = conn.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS Members (
             rfid TEXT PRIMARY KEY,

@@ -2,9 +2,14 @@ import datetime
 from icecream import ic
 from sqlite_db import SQLiteDB
 from cloud_db import CloudDB
+import threading
+import queue
+import time
 
 # Global variable to store the current database instance
 current_db_instance = None
+# Thread-safe queue for database operations
+db_operation_queue = queue.Queue()
 
 class DBActions:
     @staticmethod
@@ -23,7 +28,7 @@ class DBActions:
     def member_register(rfid, memberid, name, student_num, program, year):
         created_on = datetime.datetime.now().strftime('%Y-%m-%d')
         try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection(timeout=5) as conn:
                 cursor = conn.cursor()
                 sql = """INSERT INTO Members (rfid, memberid, name, student_num, program, year, date_registered) 
                          VALUES (?, ?, ?, ?, ?, ?, ?)"""
@@ -122,6 +127,34 @@ class DBActions:
         except Exception as e:
             ic(e)
             return []
+
+    @staticmethod
+    def fetch_table_data_async(table_name, callback=None):
+        """Non-blocking version of fetch_table_data that runs in background thread"""
+        def _fetch_worker():
+            try:
+                with DBActions.get_db_instance().get_db_connection(timeout=5) as conn:
+                    cursor = conn.cursor()
+                    if table_name == 'Members':
+                        sql = "SELECT DISTINCT rfid, memberid, name, student_num, date_registered FROM Members"
+                    else:
+                        sql = f"SELECT DISTINCT memberid, name, student_num, attendance_time FROM {table_name}"
+                    cursor.execute(sql)
+                    result = cursor.fetchall()
+                
+                if callback:
+                    callback(result if result else [])
+                return result if result else []
+            except Exception as e:
+                ic(e)
+                if callback:
+                    callback([])
+                return []
+                
+        thread = threading.Thread(target=_fetch_worker)
+        thread.daemon = True
+        thread.start()
+        return thread
 
     @staticmethod
     def fetch_point_data(table_name):
@@ -230,15 +263,30 @@ class Database:
         self.cloud_password = cloud_password
         self.app = app
         self.db = CloudDB(cloud_user, cloud_password, app) if use_cloud else SQLiteDB()
+        self.initialization_complete = False
         
         # Set this instance as the current one
         DBActions.set_db_instance(self)
 
-    def get_db_connection(self):
+    def get_db_connection(self, timeout=None):
+        if timeout is not None and self.use_cloud:
+            return self.db.get_db_connection(timeout)
         return self.db.get_db_connection()
 
-    def initialize_db(self):
-        self.db.initialize_db()
+    def initialize_db(self, timeout=None):
+        """Initialize the database with optional timeout"""
+        start_time = time.time()
+        try:
+            if self.app:
+                self.app.loading_status.configure(text="Creating database tables...")
+            self.db.initialize_db(timeout)
+            self.initialization_complete = True
+            if self.app:
+                elapsed = time.time() - start_time
+                ic(f"Database initialization completed in {elapsed:.2f} seconds")
+        except Exception as e:
+            ic(f"Database initialization failed: {str(e)}")
+            raise
 
     def db_exists(self):
         return self.db.db_exists()
@@ -248,6 +296,5 @@ class Database:
             sqlite_db = SQLiteDB()
             self.db.backup_cloud_to_sqlite(sqlite_db)
 
-# Initialize the database and create tables if they do not exist
-db = Database()
-db.initialize_db()
+# Don't initialize database at module import time
+db = None

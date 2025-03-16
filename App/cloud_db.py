@@ -2,6 +2,7 @@ import pymysql
 import sqlite3  # Add this import
 from creds import CLOUD_DB_HOST, CLOUD_DB_PORT, CLOUD_DB_NAME
 import customtkinter as CTk  # Add this import for CTKProgressBar
+import time
 
 class CloudDB:
     def __init__(self, cloud_user, cloud_password, app):
@@ -9,22 +10,34 @@ class CloudDB:
         self.cloud_password = cloud_password
         self.app = app  # Store the app object
 
-    def get_db_connection(self):
+    def get_db_connection(self, timeout=None):
         try:
+            # Set connect_timeout if provided
+            connect_timeout = timeout if timeout is not None else 30
+            
             conn = pymysql.connect(
                 host=CLOUD_DB_HOST,
                 port=int(CLOUD_DB_PORT),
-                database=CLOUD_DB_NAME,  # Use 'database' instead of 'dbname'
+                database=CLOUD_DB_NAME,
                 user=self.cloud_user,
-                password=self.cloud_password
+                password=self.cloud_password,
+                connect_timeout=connect_timeout  # Add connection timeout
             )
             return conn
         except pymysql.MySQLError as e:
             raise Exception(f"Error connecting to cloud database: {str(e)}")
 
-    def initialize_db(self):
-        conn = self.get_db_connection()
+    def initialize_db(self, timeout=None):
+        start_time = time.time()
+        conn = self.get_db_connection(timeout)
         cursor = conn.cursor()
+        
+        # Update progress indicator if available
+        if self.app and hasattr(self.app, 'loading_status'):
+            self.app.loading_status.configure(text="Creating Members table...")
+            self.app.root.update()
+            
+        # Create Members table with timeout handling
         cursor.execute('''CREATE TABLE IF NOT EXISTS Members (
             rfid TEXT PRIMARY KEY,
             memberid TEXT,
@@ -35,12 +48,19 @@ class CloudDB:
             date_registered TEXT,
             points REAL DEFAULT 0
         )''')
+        
+        if self.app and hasattr(self.app, 'loading_status'):
+            self.app.loading_status.configure(text="Checking columns...")
+            self.app.root.update()
+            
+        # Check if all required columns exist
         cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='Members'")
         columns = [column[0] for column in cursor.fetchall()]
         required_columns = ['rfid', 'memberid', 'name', 'student_num', 'program', 'year', 'date_registered', 'points']
         for col in required_columns:
             if col not in columns:
                 cursor.execute(f"ALTER TABLE Members ADD COLUMN {col} TEXT")
+                
         conn.commit()
         conn.close()
 
@@ -85,17 +105,27 @@ class CloudDB:
         sqlite_conn.close()
 
     def insert_data(self, table_name, data):
+        # Show initialization message
+        if self.app and hasattr(self.app, 'loading_status'):
+            self.app.loading_status.configure(text=f"Inserting data into {table_name}...")
+            self.app.root.update()
+            
         conn = self.get_db_connection()
         cursor = conn.cursor()
         
-        # Ensure the Members table exists
-        self.ensure_table_exists(cursor)
+        # Ensure the table exists
+        self.ensure_table_exists(cursor, table_name)
         
-        # Initialize progress bar
-        progress_bar = CTk.CTkProgressBar(self.app.root, mode='indeterminate')
-        progress_bar.pack(side='bottom', pady=20)
-        progress_bar.start()
+        # Initialize progress bar with determinate mode
+        rows_inserted = 0
+        total_rows = len(data)
         
+        if self.app and hasattr(self.app, 'progress_bar'):
+            progress_bar = self.app.progress_bar
+            progress_bar.set(0)
+            self.app.root.update()
+        
+        # Process data in smaller batches
         for row in data:
             if isinstance(row, sqlite3.Row):
                 row = dict(row)  # Convert sqlite3.Row to dictionary
@@ -104,50 +134,68 @@ class CloudDB:
             sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
             try:
                 cursor.execute(sql, list(row.values()))
+                rows_inserted += 1
+                
+                # Update progress every 10 rows or so
+                if rows_inserted % 10 == 0 and self.app and hasattr(self.app, 'progress_bar'):
+                    self.app.progress_bar.set(rows_inserted / total_rows)
+                    self.app.root.update()
+                    
             except pymysql.err.IntegrityError as e:
                 if e.args[0] == 1062:  # Duplicate entry error code
                     print(f"Duplicate entry found for {row}. Skipping insertion.")
                 else:
                     raise e
-        
-        # Stop and hide progress bar after insertion
-        progress_bar.stop()
-        progress_bar.pack_forget()
-        
+                    
         conn.commit()
         conn.close()
-
-    def ensure_table_exists(self, cursor):
-        # Initialize progress bar
-        progress_bar = CTk.CTkProgressBar(self.app.root, mode='indeterminate')
-        progress_bar.pack(side='bottom', pady=20)
-        progress_bar.start()
         
-        try:
-            cursor.execute("SELECT 1 FROM Members LIMIT 1")
-        except pymysql.err.ProgrammingError as e:
-            if e.args[0] == 1146:  # Table does not exist error code
-                print("Table 'Members' does not exist. Creating table...")
-                cursor.execute("""
-                    CREATE TABLE Members (
-                        rfid TEXT PRIMARY KEY,
-                        memberid TEXT,
-                        name TEXT,
-                        student_num TEXT,
-                        program TEXT,
-                        year TEXT,
-                        date_registered TEXT,
-                        points REAL DEFAULT 0
-                    )
-                """)
-            else:
-                 # Stop and hide progress bar after ensuring table exists
-                progress_bar.stop()
-                progress_bar.pack_forget()
-                raise e
-         # Stop and hide progress bar after ensuring table exists
-        progress_bar.stop()
-        progress_bar.pack_forget()
+        # Set progress complete
+        if self.app and hasattr(self.app, 'progress_bar'):
+            self.app.progress_bar.set(1.0)
+            self.app.root.update()
+
+    def ensure_table_exists(self, cursor, table_name=None):
+        # Check if it's the Members table
+        if table_name is None or table_name.lower() == 'members':
+            try:
+                cursor.execute("SELECT 1 FROM Members LIMIT 1")
+            except pymysql.err.ProgrammingError as e:
+                if e.args[0] == 1146:  # Table does not exist error code
+                    print("Table 'Members' does not exist. Creating table...")
+                    cursor.execute("""
+                        CREATE TABLE Members (
+                            rfid TEXT PRIMARY KEY,
+                            memberid TEXT,
+                            name TEXT,
+                            student_num TEXT,
+                            program TEXT,
+                            year TEXT,
+                            date_registered TEXT,
+                            points REAL DEFAULT 0
+                        )
+                    """)
+                else:
+                    raise e
+        else:
+            # For other tables
+            try:
+                cursor.execute(f"SELECT 1 FROM `{table_name}` LIMIT 1")
+            except pymysql.err.ProgrammingError as e:
+                if e.args[0] == 1146:  # Table does not exist error code
+                    print(f"Table '{table_name}' does not exist. Creating table...")
+                    cursor.execute(f"""
+                        CREATE TABLE `{table_name}` (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            rfid TEXT NOT NULL,
+                            memberid TEXT NOT NULL,
+                            student_num TEXT NOT NULL,
+                            name TEXT NOT NULL,
+                            attendance_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """)
+                else:
+                    raise e
 
     def fetch_all_data(self):
         conn = self.get_db_connection()

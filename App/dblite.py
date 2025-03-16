@@ -1,23 +1,35 @@
 import datetime
 from icecream import ic
-import sqlite3
-import os
+from sqlite_db import SQLiteDB
+from cloud_db import CloudDB
+
+# Global variable to store the current database instance
+current_db_instance = None
 
 class DBActions:
+    @staticmethod
+    def set_db_instance(db_instance):
+        global current_db_instance
+        current_db_instance = db_instance
+
+    @staticmethod
+    def get_db_instance():
+        global current_db_instance
+        if current_db_instance is None:
+            current_db_instance = Database()
+        return current_db_instance
+
     @staticmethod
     def member_register(rfid, memberid, name, student_num, program, year):
         created_on = datetime.datetime.now().strftime('%Y-%m-%d')
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = """INSERT INTO Members (rfid, memberid, name, student_num, program, year, date_registered) 
                          VALUES (?, ?, ?, ?, ?, ?, ?)"""
                 cursor.execute(sql, (rfid, memberid, name, student_num, program, year, created_on))
                 conn.commit()
             return 0
-        except sqlite3.ProgrammingError as e:
-            ic(e)  # Debugging line to print the exception
-            return -1
         except Exception as e:
             ic(e)  # Debugging line to print the exception
             return -1
@@ -25,7 +37,7 @@ class DBActions:
     @staticmethod
     def member_exists(rfid):
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = "SELECT memberid, name, student_num FROM Members WHERE rfid = ?"
                 cursor.execute(sql, (rfid,))
@@ -38,14 +50,22 @@ class DBActions:
     @staticmethod
     def list_tables():
         try:
-            with Database.get_db_connection() as conn:
-                conn = Database.get_db_connection()
+            db_instance = DBActions.get_db_instance()
+            with db_instance.get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-                tables = cursor.fetchall()
-                conn.close()
-            # Filter out 'Members' table
-            return [table[0] for table in tables if table[0] not in ['Members', 'sqlite_sequence']]
+                
+                # Different query based on database type
+                if db_instance.use_cloud:
+                    cursor.execute("SHOW TABLES")
+                    tables = cursor.fetchall()
+                    # MySQL returns tuples with the table name as the first element
+                    return [table[0] for table in tables if table[0] != 'Members']
+                else:
+                    # SQLite query
+                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                    tables = cursor.fetchall()
+                    # Filter out 'Members' table
+                    return [table[0] for table in tables if table[0] not in ['Members', 'sqlite_sequence']]
         except Exception as e:
             ic(e)
             return []
@@ -54,27 +74,43 @@ class DBActions:
     def create_event_table(table_name):
         table_name = table_name.replace(" ", "_")
         try:
-            with Database.get_db_connection() as conn:
+            db_instance = DBActions.get_db_instance()
+            with db_instance.get_db_connection() as conn:
                 cursor = conn.cursor()
-                sql = f"""CREATE TABLE IF NOT EXISTS `{table_name}` (
-                              id INTEGER PRIMARY KEY AUTOINCREMENT,
-                              rfid TEXT NOT NULL,
-                              memberid TEXT NOT NULL,
-                              student_num TEXT NOT NULL,
-                              name TEXT NOT NULL,
-                              attendance_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                              FOREIGN KEY (rfid) REFERENCES Members(rfid)
-                          )"""
+                
+                # Different SQL based on database type
+                if db_instance.use_cloud:
+                    # MySQL syntax
+                    sql = f"""CREATE TABLE IF NOT EXISTS `{table_name}` (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        rfid TEXT NOT NULL,
+                        memberid TEXT NOT NULL,
+                        student_num TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        attendance_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )"""
+                else:
+                    # SQLite syntax
+                    sql = f"""CREATE TABLE IF NOT EXISTS `{table_name}` (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        rfid TEXT NOT NULL,
+                        memberid TEXT NOT NULL,
+                        student_num TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        attendance_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (rfid) REFERENCES Members(rfid)
+                    )"""
                 cursor.execute(sql)
                 conn.commit()
             return 0
         except Exception as e:
             ic(e)
+            return -1
 
     @staticmethod
     def fetch_table_data(table_name):
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 if table_name == 'Members':
                     sql = "SELECT DISTINCT rfid, memberid, name, student_num, date_registered FROM Members"
@@ -82,14 +118,15 @@ class DBActions:
                     sql = f"SELECT DISTINCT memberid, name, student_num, attendance_time FROM {table_name}"
                 cursor.execute(sql)
                 result = cursor.fetchall()
-            return result
+            return result if result else []
         except Exception as e:
             ic(e)
+            return []
 
     @staticmethod
     def fetch_point_data(table_name):
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = f"SELECT name, points FROM {table_name}"
                 cursor.execute(sql)
@@ -109,7 +146,7 @@ class DBActions:
             name = member['name']
             student_num = member['student_num']
 
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = f"INSERT INTO {table_name} (rfid, memberid, name, student_num) VALUES (?, ?, ?, ?)"
                 cursor.execute(sql, (rfid, memberid, name, student_num))
@@ -122,7 +159,7 @@ class DBActions:
     @staticmethod
     def get_member_name(rfid):
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = "SELECT name FROM Members WHERE rfid = ?"
                 cursor.execute(sql, (rfid,))
@@ -135,7 +172,7 @@ class DBActions:
     @staticmethod
     def add_points(rfid, points):
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = "UPDATE Members SET points = points + ? WHERE rfid = ?"
                 cursor.execute(sql, (points, rfid))
@@ -149,7 +186,7 @@ class DBActions:
     @staticmethod
     def get_member_points(rfid):
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = "SELECT points FROM Members WHERE rfid = ?"
                 cursor.execute(sql, (rfid,))
@@ -162,7 +199,7 @@ class DBActions:
     @staticmethod
     def redeem_points(rfid, points):
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = "UPDATE Members SET points = points - ? WHERE rfid = ?"
                 cursor.execute(sql, (points, rfid))
@@ -175,7 +212,7 @@ class DBActions:
     @staticmethod
     def member_attended_event(table_name, rfid):
         try:
-            with Database.get_db_connection() as conn:
+            with DBActions.get_db_instance().get_db_connection() as conn:
                 cursor = conn.cursor()
                 sql = f"SELECT COUNT(*) FROM {table_name} WHERE rfid = ?"
                 cursor.execute(sql, (rfid,))
@@ -187,48 +224,30 @@ class DBActions:
 
 
 class Database:
-    @staticmethod
-    def get_db_connection():
-        db_path = 'AHO_MEMBER.db'
+    def __init__(self, use_cloud=False, cloud_user=None, cloud_password=None, app=None):
+        self.use_cloud = use_cloud
+        self.cloud_user = cloud_user
+        self.cloud_password = cloud_password
+        self.app = app
+        self.db = CloudDB(cloud_user, cloud_password, app) if use_cloud else SQLiteDB()
+        
+        # Set this instance as the current one
+        DBActions.set_db_instance(self)
 
-        # Create the database file if it does not exist
-        if not os.path.exists(db_path):
-            open(db_path, 'w').close()
+    def get_db_connection(self):
+        return self.db.get_db_connection()
 
-        ahodb = sqlite3.connect(db_path)
-        ahodb.row_factory = sqlite3.Row
+    def initialize_db(self):
+        self.db.initialize_db()
 
-        return ahodb
+    def db_exists(self):
+        return self.db.db_exists()
 
-    @staticmethod
-    def initialize_db():
-        conn = Database.get_db_connection()
-        cursor = conn.cursor()
-        # Create the table if it doesn't exist
-        cursor.execute('''CREATE TABLE IF NOT EXISTS Members (
-            rfid TEXT PRIMARY KEY,
-            memberid TEXT,
-            name TEXT,
-            student_num TEXT,
-            program TEXT,
-            year TEXT,
-            date_registered TEXT,
-            points REAL DEFAULT 0
-        )''')
-        # Add the points column if it doesn't exist
-        cursor.execute("PRAGMA table_info(Members)")
-        columns = [column[1] for column in cursor.fetchall()]
-        if 'points' not in columns:
-            cursor.execute("ALTER TABLE Members ADD COLUMN points REAL DEFAULT 0")
-        conn.commit()
-        conn.close()
-
-    @staticmethod
-    def db_exists():
-        db_path = 'AHO_MEMBER.db'
-        # Check if the database file exists
-        return os.path.exists(db_path)
-
+    def backup_cloud_to_sqlite(self):
+        if self.use_cloud:
+            sqlite_db = SQLiteDB()
+            self.db.backup_cloud_to_sqlite(sqlite_db)
 
 # Initialize the database and create tables if they do not exist
-Database.initialize_db()
+db = Database()
+db.initialize_db()

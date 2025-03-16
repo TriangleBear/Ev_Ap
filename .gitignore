@@ -163,3 +163,4 @@ dbActionsCloud.py
 *.db
 color_settings.txt
 /App/output
+/output

@@ -1,4 +1,6 @@
 import customtkinter as CTk
+from CTkMessagebox import CTkMessagebox
+from dblite import DBActions, Database
 
 class EventsView(CTk.CTkFrame):
     def __init__(self, parent, app):
@@ -77,6 +79,28 @@ class EventsView(CTk.CTkFrame):
                 text="View Attendance", 
                 command=lambda e=event: self.app.table_manager.create_table_window(e)
             ).pack(side="left", padx=5)
+            
+            CTk.CTkButton(
+                actions_frame, 
+                text="Delete Event", 
+                command=lambda e=event: self.confirm_delete_event(e)
+            ).pack(side="left", padx=5)
+            
+    def confirm_delete_event(self, event_name):
+        response = CTkMessagebox(title="Delete Event", message=f"Are you sure you want to delete the event '{event_name}'?", icon="warning", option_1="Yes", option_2="No")
+        if response.get() == "Yes":
+            self.delete_event(event_name)
+            
+    def delete_event(self, event_name):
+        try:
+            with Database().get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(f"DROP TABLE IF EXISTS `{event_name}`")
+                conn.commit()
+            CTkMessagebox(title="Delete Event", message=f"Event '{event_name}' deleted successfully.", icon="check")
+            self.refresh_events()
+        except Exception as e:
+            CTkMessagebox(title="Delete Event Error", message=f"Error deleting event: {str(e)}", icon="error")
             
     def open_event(self, event_name):
         self.app.table_manager.create_table_window(event_name)

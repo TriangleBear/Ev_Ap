@@ -77,31 +77,47 @@ class TableManager:
         if rfid_num in self.app.member_manager.rfid_cache:
             last_scan_time = self.app.member_manager.rfid_cache[rfid_num]
             if current_time - last_scan_time < 15:
-                messagebox1 = CTkMessagebox(title="RFID Scan", message=f"{rfid_num} was scanned within the last 15 seconds. Ignoring scan...", icon="warning")
-                table_window.after(4500, messagebox1.destroy)
+                try:
+                    messagebox1 = CTkMessagebox(title="RFID Scan", message=f"{rfid_num} was scanned within the last 15 seconds. Ignoring scan...")
+                    if table_window.winfo_exists():
+                        table_window.after(4500, lambda: self.safely_destroy_messagebox(messagebox1))
+                except Exception as e:
+                    print(f"Error showing RFID scan message: {e}")
                 return
 
         if DBActions.member_attended_event(selected_table, rfid_num):
-            messagebox2 = CTkMessagebox(title="RFID Scan", message="Member has already attended this event.", icon="warning")
-            table_window.after(4500, messagebox2.destroy)
-            entry_widget.delete(0, CTk.END)
+            try:
+                messagebox2 = CTkMessagebox(title="RFID Scan", message="Member has already attended this event.")
+                if table_window.winfo_exists():
+                    table_window.after(4500, lambda: self.safely_destroy_messagebox(messagebox2))
+                entry_widget.delete(0, CTk.END)
+            except Exception as e:
+                print(f"Error showing attendance message: {e}")
             return
 
         def insert_digit(index):
             if index < len(rfid_num):
                 member = DBActions.member_exists(rfid_num)
                 if not member:
-                    messagebox2 = CTkMessagebox(title="RFID Scan Error", message="RFID number not found", icon="cancel")
-                    table_window.after(1000, messagebox2.destroy)
-                    entry_widget.delete(0, CTk.END)
+                    try:
+                        messagebox2 = CTkMessagebox(title="RFID Scan Error", message="RFID number not found")
+                        if table_window.winfo_exists():
+                            table_window.after(1000, lambda: self.safely_destroy_messagebox(messagebox2))
+                        entry_widget.delete(0, CTk.END)
+                    except Exception as e:
+                        print(f"Error showing RFID not found message: {e}")
                     return
 
                 entry_widget.insert(CTk.END, rfid_num[index])
                 DBActions.attendance_member_event(selected_table, rfid_num)
                 refresh_data()
-                messagebox2 = CTkMessagebox(title="RFID Scan", message="RFID recorded", icon="check")
-                table_window.after(1000, messagebox2.destroy)
-                entry_widget.delete(0, CTk.END)
+                try:
+                    messagebox2 = CTkMessagebox(title="RFID Scan", message="RFID recorded")
+                    if table_window.winfo_exists():
+                        table_window.after(1000, lambda: self.safely_destroy_messagebox(messagebox2))
+                    entry_widget.delete(0, CTk.END)
+                except Exception as e:
+                    print(f"Error showing RFID recorded message: {e}")
 
                 points = self.app.event_manager.points_per_event.get(selected_table, 0.10)
                 ic(f"Adding {points} points to RFID {rfid_num} for event {selected_table}")
@@ -114,6 +130,13 @@ class TableManager:
 
         self.app.member_manager.rfid_cache[rfid_num] = current_time
         insert_digit(0)
+
+    def safely_destroy_messagebox(self, messagebox):
+        try:
+            if messagebox.winfo_exists():
+                messagebox.destroy()
+        except Exception as e:
+            print(f"Error destroying messagebox: {e}")
 
     def copy_to_clipboard(self, text):
         self.app.root.clipboard_clear()

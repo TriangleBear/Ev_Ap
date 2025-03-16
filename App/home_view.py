@@ -72,7 +72,7 @@ class HomeView(CTk.CTkFrame):
         # Similar to the original confirm_button_clicked but with improved UI
         tables = self.app.update_tables_dropdown()
         if not tables:
-            CTkMessagebox(title="Warning", message="No events available. Please create an event first.", icon="warning")
+            CTkMessagebox(title="Warning", message="No events available. Please create an event first.")
             return
             
         selection_dialog = CTk.CTkToplevel(self.app.root)
@@ -106,6 +106,6 @@ class HomeView(CTk.CTkFrame):
                 selection_dialog.destroy()
                 self.app.table_manager.create_table_window(selected_table)
             else:
-                CTkMessagebox(title="Warning", message="Please select an event", icon="warning")
+                CTkMessagebox(title="Warning", message="Please select an event")
                 
         CTk.CTkButton(selection_dialog, text="Track Attendance", command=on_select).pack(padx=20, pady=20)

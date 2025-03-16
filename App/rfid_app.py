@@ -2,17 +2,14 @@ from tkinter import TclError
 import customtkinter as CTk
 from dblite import DBActions, Database
 from icecream import ic
+import threading
+import time
 
 from event_manager import EventManager
 from member_manager import MemberManager
 from table_manager import TableManager
 from home_view import HomeView
-from events_view import EventsView
-from members_view import MembersView
-from reports_view import ReportsView
-from settings_view import SettingsView
-from help_view import HelpView
-from about_view import AboutView
+# Import other views when needed, not all at startup
 
 class MainApp:
     def __init__(self):
@@ -22,8 +19,14 @@ class MainApp:
         self.root.resizable(True, True)
         
         # Set default appearance mode and theme
-        CTk.set_appearance_mode("System")  # "System", "Dark", "Light"
-        CTk.set_default_color_theme("blue")  # "blue", "green", "dark-blue"
+        CTk.set_appearance_mode("System")
+        CTk.set_default_color_theme("blue")
+        
+        # Initialize status variables
+        self.initialized_views = {}
+        self.db_initialized = False
+        self.loading_label = None
+        self.loading_status = None
         
         # Show database selection prompt
         self.show_db_selection_prompt()
@@ -86,37 +89,80 @@ class MainApp:
         if hasattr(self, 'cloud_credentials_window'):
             self.cloud_credentials_window.destroy()
         
-        # Initialize progress bar
-        self.progress_bar = CTk.CTkProgressBar(self.root, mode='indeterminate')
+        # Create main layout first for better UX
+        self.create_basic_layout()
+        
+        # Show loading information
+        self.loading_label = CTk.CTkLabel(self.content_frame, text="Initializing Application...", 
+                                         font=CTk.CTkFont(size=16, weight="bold"))
+        self.loading_label.pack(pady=(100, 10))
+        
+        self.loading_status = CTk.CTkLabel(self.content_frame, text="Connecting to database...")
+        self.loading_status.pack(pady=5)
+        
+        # Initialize progress bar with determinate mode
+        self.progress_bar = CTk.CTkProgressBar(self.content_frame, mode='determinate', width=400)
         self.progress_bar.pack(pady=20)
-        self.progress_bar.start()
+        self.progress_bar.set(0.1)
+        self.root.update()  # Force UI update
         
-        # Initialize database
+        # Initialize database in background thread
         self.database = Database(use_cloud=use_cloud, cloud_user=cloud_user, cloud_password=cloud_password, app=self)
-        self.database.initialize_db()
         
-        # Set the database instance for DBActions
-        DBActions.set_db_instance(self.database)
+        # Start initialization thread
+        self.init_thread = threading.Thread(target=self.background_initialization, 
+                                           args=(use_cloud, cloud_user, cloud_password))
+        self.init_thread.daemon = True
+        self.init_thread.start()
         
-        # Initialize managers before creating UI
-        self.event_manager = EventManager(self)
-        self.member_manager = MemberManager(self)
-        self.table_manager = TableManager(self)
-        
-        # Create the main layout with navigation and content areas
-        self.create_layout()
-        
-        # Preload data
-        self.preload_data()
-        
-        # Center the window
-        self.center_window(self.root)
-        
-        # Stop and hide progress bar after initialization
-        self.progress_bar.stop()
-        self.progress_bar.pack_forget()
+        # Start polling for completion
+        self.root.after(100, self.check_initialization_progress)
 
-    def create_layout(self):
+    def background_initialization(self, use_cloud, cloud_user=None, cloud_password=None):
+        """Perform heavy initialization tasks in background thread"""
+        try:
+            # Set database instance for DBActions
+            DBActions.set_db_instance(self.database)
+            
+            # Initialize database with timeout handling
+            self.database.initialize_db(timeout=10)
+            
+            # Initialize managers
+            self.event_manager = EventManager(self)
+            self.member_manager = MemberManager(self)
+            self.table_manager = TableManager(self)
+            
+            # Preload only essential data
+            self.preload_essential_data()
+            
+            # Mark initialization as complete
+            self.db_initialized = True
+        except Exception as e:
+            print(f"Error in background initialization: {e}")
+            self.initialization_error = str(e)
+
+    def check_initialization_progress(self):
+        """Check if background initialization is complete"""
+        if hasattr(self, 'initialization_error'):
+            # Show error message
+            if self.loading_status:
+                self.loading_status.configure(text=f"Error: {self.initialization_error}")
+            return
+            
+        if not self.db_initialized:
+            # Update progress animation
+            self.progress_bar.set(min(self.progress_bar.get() + 0.05, 0.9))
+            self.root.after(100, self.check_initialization_progress)
+            return
+            
+        # Initialization complete
+        self.progress_bar.set(1.0)
+        
+        # Complete UI initialization
+        self.finalize_ui_initialization()
+
+    def create_basic_layout(self):
+        """Create the basic layout structure first"""
         # Create main layout with two frames: sidebar and content area
         self.sidebar_frame = CTk.CTkFrame(self.root, width=200, corner_radius=0)
         self.sidebar_frame.pack(side="left", fill="y", padx=0, pady=0)
@@ -124,10 +170,41 @@ class MainApp:
 
         self.content_frame = CTk.CTkFrame(self.root)
         self.content_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-
+        
         # Create application title in sidebar
-        self.app_title = CTk.CTkLabel(self.sidebar_frame, text="AHO RFID App", font=CTk.CTkFont(size=20, weight="bold"))
+        self.app_title = CTk.CTkLabel(self.sidebar_frame, text="AHO RFID App", 
+                                     font=CTk.CTkFont(size=20, weight="bold"))
         self.app_title.pack(padx=20, pady=(20, 10))
+        
+        # Add database connection status label
+        self.db_status_label = CTk.CTkLabel(self.sidebar_frame, text="Initializing...", 
+                                           font=CTk.CTkFont(size=12, weight="bold"))
+        self.db_status_label.pack(side="bottom", pady=10)
+
+    def create_nav_button(self, text, command):
+        """Create a navigation button with consistent styling"""
+        button = CTk.CTkButton(
+            self.sidebar_frame, 
+            text=text, 
+            fg_color="transparent", 
+            anchor="w",
+            command=command,
+            font=CTk.CTkFont(size=14),
+            hover_color=("gray75", "gray25"),
+            height=40
+        )
+        button.pack(padx=20, pady=5, fill="x")
+        return button
+
+    def finalize_ui_initialization(self):
+        """Complete the UI initialization after database is ready"""
+        # Remove loading indicators
+        if self.loading_label:
+            self.loading_label.pack_forget()
+        if self.loading_status:
+            self.loading_status.pack_forget()
+        if self.progress_bar:
+            self.progress_bar.pack_forget()
         
         # Create sidebar divider
         self.sidebar_divider1 = CTk.CTkFrame(self.sidebar_frame, height=1, width=160)
@@ -135,7 +212,6 @@ class MainApp:
         
         # Create navigation buttons
         self.nav_buttons = {}
-        
         self.nav_buttons["home"] = self.create_nav_button("Home", self.show_home_view)
         self.nav_buttons["events"] = self.create_nav_button("Events", self.show_events_view)
         self.nav_buttons["members"] = self.create_nav_button("Members", self.show_members_view)
@@ -161,56 +237,63 @@ class MainApp:
         self.appearance_mode_menu.pack(padx=20, pady=10)
         self.appearance_mode_menu.set("System")
         
-        # Create all view frames but show only home initially
-        self.create_view_frames()
+        # Initialize only the home view
+        self.init_view("home")
         self.show_home_view()
-
-        # Add database connection status label
-        self.db_status_label = CTk.CTkLabel(self.sidebar_frame, text="", font=CTk.CTkFont(size=12, weight="bold"))
-        self.db_status_label.pack(side="bottom", pady=10)
+        
+        # Update database status
         self.update_db_status_label()
+        
+        # Center the window
+        self.center_window(self.root)
 
-    def create_nav_button(self, text, command):
-        button = CTk.CTkButton(
-            self.sidebar_frame, 
-            text=text, 
-            fg_color="transparent", 
-            anchor="w",
-            command=command,
-            font=CTk.CTkFont(size=14),
-            hover_color=("gray75", "gray25"),
-            height=40
-        )
-        button.pack(padx=20, pady=5, fill="x")
-        return button
-        
-    def create_view_frames(self):
-        # Create frames for each view
-        self.home_frame = HomeView(self.content_frame, self)
-        self.events_frame = EventsView(self.content_frame, self)
-        self.members_frame = MembersView(self.content_frame, self)
-        self.reports_frame = ReportsView(self.content_frame, self)
-        self.settings_frame = SettingsView(self.content_frame, self)
-        self.help_frame = HelpView(self.content_frame, self)
-        self.about_frame = AboutView(self.content_frame, self)
-        
-        self.frames = {
-            "home": self.home_frame,
-            "events": self.events_frame,
-            "members": self.members_frame,
-            "reports": self.reports_frame,
-            "settings": self.settings_frame,
-            "help": self.help_frame,
-            "about": self.about_frame
-        }
+    def preload_essential_data(self):
+        """Preload only essential data to speed up startup"""
+        self.preloaded_data = {'Members': DBActions.fetch_table_data('Members')}
+        # Don't load all tables at startup - defer loading until needed
+        self.tables_list = DBActions.list_tables()
+
+    def init_view(self, view_name):
+        """Lazily initialize a view only when needed"""
+        if view_name in self.initialized_views:
+            return self.initialized_views[view_name]
+            
+        # Import views only when needed
+        if view_name == "home":
+            from home_view import HomeView
+            self.initialized_views[view_name] = HomeView(self.content_frame, self)
+        elif view_name == "events":
+            from events_view import EventsView
+            self.initialized_views[view_name] = EventsView(self.content_frame, self)
+        elif view_name == "members":
+            from members_view import MembersView
+            self.initialized_views[view_name] = MembersView(self.content_frame, self)
+        elif view_name == "reports":
+            from reports_view import ReportsView
+            self.initialized_views[view_name] = ReportsView(self.content_frame, self)
+        elif view_name == "settings":
+            from settings_view import SettingsView
+            self.initialized_views[view_name] = SettingsView(self.content_frame, self)
+        elif view_name == "help":
+            from help_view import HelpView
+            self.initialized_views[view_name] = HelpView(self.content_frame, self)
+        elif view_name == "about":
+            from about_view import AboutView
+            self.initialized_views[view_name] = AboutView(self.content_frame, self)
+            
+        return self.initialized_views[view_name]
 
     def show_frame(self, frame_name):
+        """Show the requested frame/view, initializing it if needed"""
+        # First, make sure the view is initialized
+        frame = self.init_view(frame_name)
+        
         # Hide all frames
-        for frame in self.frames.values():
-            frame.pack_forget()
+        for initialized_frame in self.initialized_views.values():
+            initialized_frame.pack_forget()
         
         # Show the selected frame
-        self.frames[frame_name].pack(fill="both", expand=True)
+        frame.pack(fill="both", expand=True)
         
         # Update active button styling
         for name, button in self.nav_buttons.items():
@@ -274,11 +357,10 @@ class MainApp:
             print(f"Error centering window: {e}")
 
     def update_tables_dropdown(self):
-        if not self.database.db_exists():
-            self.database.initialize_db()
-        tables = DBActions.list_tables()
-        tables = [table for table in tables if table != 'Members']
-        ic(tables)
+        """Fetch tables list on demand instead of at startup"""
+        if not hasattr(self, 'tables_list') or not self.tables_list:
+            self.tables_list = DBActions.list_tables()
+        tables = [table for table in self.tables_list if table != 'Members']
         return tables
 
     def update_db_status_label(self):

@@ -51,12 +51,12 @@ class MemberManager:
 
             if DBActions.member_exists(rfid_num):
                 ic("Member already exists!")
-                CTkMessagebox(title="Member Registration", message="Member already exists!", icon="error")
+                CTkMessagebox(title="Member Registration", message="Member already exists!")
                 register_window.after(300, register_window.destroy)
             else:
                 ic("Registering new member...")
                 DBActions.member_register(rfid_num, member_id, member_name, student_num, program, year)
-                CTkMessagebox(title="Member Registration", message="Member Registered!", icon="check")
+                CTkMessagebox(title="Member Registration", message="Member Registered!")
                 register_window.after(300, register_window.destroy)
 
         submit_button = CTk.CTkButton(register_window, text="Submit", command=member_register)
@@ -79,20 +79,20 @@ class MemberManager:
         def redeem_points():
             rfid_num = rfid_entry.get().strip()
             if not rfid_num:
-                CTkMessagebox(title="Redeem Points", message="RFID cannot be empty!", icon="error")
+                CTkMessagebox(title="Redeem Points", message="RFID cannot be empty!")
                 return
             points = DBActions.get_member_points(rfid_num)
             if points is None:
-                CTkMessagebox(title="Redeem Points", message="Member not found!", icon="error")
+                CTkMessagebox(title="Redeem Points", message="Member not found!")
                 return
             discount_20 = points * 0.20
             discount_50 = points * 0.50
-            response = CTkMessagebox(title="Redeem Points", message=f"Points: {points}\n20% Discount: {discount_20}\n50% Discount: {discount_50}", icon="question", option_1="20%", option_2="50%")
+            response = CTkMessagebox(title="Redeem Points", message=f"Points: {points}\n20% Discount: {discount_20}\n50% Discount: {discount_50}", option_1="20%", option_2="50%")
             if response.get() == "20%":
                 DBActions.redeem_points(rfid_num, discount_20)
             elif response.get() == "50%":
                 DBActions.redeem_points(rfid_num, discount_50)
-            CTkMessagebox(title="Redeem Points", message="Points redeemed successfully!", icon="check")
+            CTkMessagebox(title="Redeem Points", message="Points redeemed successfully!")
             redeem_window.destroy()
 
         redeem_button = CTk.CTkButton(redeem_window, text="Redeem", command=redeem_points)

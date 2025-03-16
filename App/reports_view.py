@@ -44,7 +44,7 @@ class ReportsView(CTk.CTkFrame):
         # Generate attendance report for a specific event
         tables = self.app.update_tables_dropdown()
         if not tables:
-            CTkMessagebox(title="Warning", message="No events available. Please create an event first.", icon="warning")
+            CTkMessagebox(title="Warning", message="No events available. Please create an event first.")
             return
             
         selection_dialog = CTk.CTkToplevel(self.app.root)
@@ -78,14 +78,14 @@ class ReportsView(CTk.CTkFrame):
                 selection_dialog.destroy()
                 self.generate_attendance_report(selected_table)
             else:
-                CTkMessagebox(title="Warning", message="Please select an event", icon="warning")
+                CTkMessagebox(title="Warning", message="Please select an event")
                 
         CTk.CTkButton(selection_dialog, text="Generate Report", command=on_select).pack(padx=20, pady=20)
         
     def generate_attendance_report(self, event_name):
         data = DBActions.fetch_table_data(event_name)
         if not data:
-            CTkMessagebox(title="No Data", message="No attendance data found for this event.", icon="info")
+            CTkMessagebox(title="No Data", message="No attendance data found for this event.")
             return
         
         df = pd.DataFrame(data)
@@ -98,12 +98,12 @@ class ReportsView(CTk.CTkFrame):
         elif file_path.endswith('.xlsx'):
             df.to_excel(file_path, index=False)
         
-        CTkMessagebox(title="Report Generated", message="Attendance report generated successfully.", icon="check")
+        CTkMessagebox(title="Report Generated", message="Attendance report generated successfully.")
         
     def members_summary(self):
         data = DBActions.fetch_table_data('Members')
         if not data:
-            CTkMessagebox(title="No Data", message="No member data found.", icon="info")
+            CTkMessagebox(title="No Data", message="No member data found.")
             return
         
         df = pd.DataFrame(data)
@@ -116,13 +116,13 @@ class ReportsView(CTk.CTkFrame):
         elif file_path.endswith('.xlsx'):
             df.to_excel(file_path, index=False)
         
-        CTkMessagebox(title="Report Generated", message="Members summary report generated successfully.", icon="check")
+        CTkMessagebox(title="Report Generated", message="Members summary report generated successfully.")
         
     def redemption_report(self):
         # Generate points redemption report using the points column in the Members table
         data = DBActions.fetch_point_data('Members')
         if not data:
-            CTkMessagebox(title="No Data", message="No member data found.", icon="info")
+            CTkMessagebox(title="No Data", message="No member data found.")
             return
         
         df = pd.DataFrame(data)
@@ -137,14 +137,14 @@ class ReportsView(CTk.CTkFrame):
         elif file_path.endswith('.xlsx'):
             df.to_excel(file_path, index=False)
         
-        CTkMessagebox(title="Report Generated", message="Points redemption report generated successfully.", icon="check")
+        CTkMessagebox(title="Report Generated", message="Points redemption report generated successfully.")
         
     def export_data(self):
         # Export event or member data to CSV or Excel
         tables = self.app.update_tables_dropdown()
         tables.append('Members')
         if not tables:
-            CTkMessagebox(title="Warning", message="No data available to export.", icon="warning")
+            CTkMessagebox(title="Warning", message="No data available to export.")
             return
             
         selection_dialog = CTk.CTkToplevel(self.app.root)
@@ -178,14 +178,14 @@ class ReportsView(CTk.CTkFrame):
                 selection_dialog.destroy()
                 self.export_selected_data(selected_table)
             else:
-                CTkMessagebox(title="Warning", message="Please select data to export", icon="warning")
+                CTkMessagebox(title="Warning", message="Please select data to export")
                 
         CTk.CTkButton(selection_dialog, text="Export Data", command=on_select).pack(padx=20, pady=20)
         
     def export_selected_data(self, table_name):
         data = DBActions.fetch_table_data(table_name)
         if not data:
-            CTkMessagebox(title="No Data", message=f"No data found for {table_name}.", icon="info")
+            CTkMessagebox(title="No Data", message=f"No data found for {table_name}.")
             return
         
         df = pd.DataFrame(data)
@@ -198,4 +198,4 @@ class ReportsView(CTk.CTkFrame):
         elif file_path.endswith('.xlsx'):
             df.to_excel(file_path, index=False)
         
-        CTkMessagebox(title="Data Exported", message=f"{table_name} data exported successfully.", icon="check")
+        CTkMessagebox(title="Data Exported", message=f"{table_name} data exported successfully.")

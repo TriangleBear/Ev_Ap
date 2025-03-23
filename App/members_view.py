@@ -6,9 +6,14 @@ class MembersView(CTk.CTkFrame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
-        self.create_widgets()
+        self.initialized = False
 
     def create_widgets(self):
+        # Initialize UI components only when the view is shown
+        if self.initialized:
+            return
+        self.initialized = True
+
         self.header = CTk.CTkLabel(self, text="Members Management", font=CTk.CTkFont(size=24, weight="bold"))
         self.header.pack(pady=20)
         

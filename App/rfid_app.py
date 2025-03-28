@@ -282,7 +282,10 @@ class MainApp:
         self.show_frame("events")
         
     def show_members_view(self):
+        """Show the Members view."""
         self.show_frame("members")
+        if "members" in self.initialized_views:
+            self.initialized_views["members"].create_widgets()
         
     def show_reports_view(self):
         self.show_frame("reports")

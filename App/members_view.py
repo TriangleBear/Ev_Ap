@@ -49,7 +49,11 @@ class MembersView(CTk.CTkFrame):
             widget.destroy()
             
         # Fetch and cache member data
-        self.members_cache = DBActions.fetch_table_data('Members')
+        try:
+            self.members_cache = DBActions.fetch_table_data('Members')
+        except Exception as e:
+            self.members_cache = []
+            print(f"Error fetching members: {e}")
         
         if not self.members_cache:
             no_members_label = CTk.CTkLabel(
@@ -66,7 +70,7 @@ class MembersView(CTk.CTkFrame):
     def search_members(self, event):
         query = self.search_entry.get().lower()
         filtered_members = [
-            member for member in self.members_cache if any(query in str(cell).lower() for cell in member)
+            member for member in self.members_cache if any(query in str(value).lower() for value in member.values())
         ]
         self.display_members(filtered_members)
 
@@ -89,10 +93,11 @@ class MembersView(CTk.CTkFrame):
             member_frame = CTk.CTkFrame(self.members_scrollable)
             member_frame.pack(fill="x", padx=5, pady=5)
             
-            CTk.CTkLabel(member_frame, text=member[0], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # rfid
-            CTk.CTkLabel(member_frame, text=member[1], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # memberid
-            CTk.CTkLabel(member_frame, text=member[2], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # name
-            CTk.CTkLabel(member_frame, text=member[3], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # student_num
+            # Access dictionary keys instead of indices
+            CTk.CTkLabel(member_frame, text=member['rfid'], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # rfid
+            CTk.CTkLabel(member_frame, text=member['memberid'], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # memberid
+            CTk.CTkLabel(member_frame, text=member['name'], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # name
+            CTk.CTkLabel(member_frame, text=member['student_num'], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # student_num
 
     def copy_to_clipboard(self, text):
         self.app.root.clipboard_clear()

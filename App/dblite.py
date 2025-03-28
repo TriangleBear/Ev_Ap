@@ -4,6 +4,7 @@ from cloud_db import CloudDB
 import threading
 import queue
 import time
+import pymysql.cursors
 
 # Global variable to store the current database instance
 current_db_instance = None
@@ -42,7 +43,7 @@ class DBActions:
     def member_exists(rfid):
         try:
             with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
+                cursor = conn.cursor()  # Use DictCursor for dictionary-like results
                 sql = "SELECT memberid, name, student_num FROM Members WHERE rfid = %s"
                 cursor.execute(sql, (rfid,))
                 result = cursor.fetchone()
@@ -59,9 +60,10 @@ class DBActions:
                 cursor = conn.cursor()
                 cursor.execute("SHOW TABLES")
                 tables = cursor.fetchall()
-                return [table[0] for table in tables if table[0] != 'Members']
+                # Ensure the result is a list of table names
+                return [table['Tables_in_' + "AHO_EVENTS"] for table in tables]  # Adjust key based on database name
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return []
 
     @staticmethod
@@ -90,11 +92,11 @@ class DBActions:
     def fetch_table_data(table_name):
         try:
             with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
+                cursor = conn.cursor(pymysql.cursors.DictCursor)  # Use DictCursor for dictionary-like results
                 if table_name == 'Members':
-                    sql = "SELECT DISTINCT rfid, memberid, name, student_num, date_registered FROM Members"
+                    sql = "SELECT DISTINCT rfid, memberid, name, student_num, program, year, date_registered, points FROM Members"
                 else:
-                    sql = f"SELECT DISTINCT memberid, name, student_num, attendance_time FROM {table_name}"
+                    sql = f"SELECT DISTINCT rfid, memberid, name, student_num, attendance_time FROM {table_name}"
                 cursor.execute(sql)
                 result = cursor.fetchall()
             return result if result else []

@@ -1,8 +1,10 @@
 import pymysql
+import pymysql.cursors  # Import DictCursor
 import sqlite3  # Add this import
 from creds import CLOUD_DB_HOST, CLOUD_DB_PORT, CLOUD_DB_NAME
 import customtkinter as CTk  # Add this import for CTKProgressBar
 import time
+from icecream import ic
 
 class CloudDB:
     def __init__(self, cloud_user, cloud_password, app):
@@ -21,7 +23,8 @@ class CloudDB:
                 database=CLOUD_DB_NAME,
                 user=self.cloud_user,
                 password=self.cloud_password,
-                connect_timeout=connect_timeout  # Add connection timeout
+                connect_timeout=connect_timeout,
+                cursorclass=pymysql.cursors.DictCursor  # Use DictCursor for dictionary-like results
             )
             return conn
         except pymysql.MySQLError as e:
@@ -29,40 +32,53 @@ class CloudDB:
 
     def initialize_db(self, timeout=None):
         start_time = time.time()
-        conn = self.get_db_connection(timeout)
-        cursor = conn.cursor()
-        
-        # Update progress indicator if available
-        if self.app and hasattr(self.app, 'loading_status'):
-            self.app.loading_status.configure(text="Creating Members table...")
-            self.app.root.update()
+        try:
+            conn = self.get_db_connection(timeout)
+            cursor = conn.cursor()
             
-        # Create Members table with timeout handling
-        cursor.execute('''CREATE TABLE IF NOT EXISTS Members (
-            rfid TEXT PRIMARY KEY,
-            memberid TEXT,
-            name TEXT,
-            student_num TEXT,
-            program TEXT,
-            year TEXT,
-            date_registered TEXT,
-            points REAL DEFAULT 0
-        )''')
-        
-        if self.app and hasattr(self.app, 'loading_status'):
-            self.app.loading_status.configure(text="Checking columns...")
-            self.app.root.update()
+            # Update progress indicator if available
+            if self.app and hasattr(self.app, 'loading_status'):
+                self.app.loading_status.configure(text="Creating Members table...")
+                self.app.root.update()
             
-        # Check if all required columns exist
-        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='Members'")
-        columns = [column[0] for column in cursor.fetchall()]
-        required_columns = ['rfid', 'memberid', 'name', 'student_num', 'program', 'year', 'date_registered', 'points']
-        for col in required_columns:
-            if col not in columns:
-                cursor.execute(f"ALTER TABLE Members ADD COLUMN {col} TEXT")
-                
-        conn.commit()
-        conn.close()
+            # Create Members table with timeout handling
+            cursor.execute('''CREATE TABLE IF NOT EXISTS Members (
+                rfid TEXT PRIMARY KEY,
+                memberid TEXT,
+                name TEXT,
+                student_num TEXT,
+                program TEXT,
+                year TEXT,
+                date_registered TEXT,
+                points REAL DEFAULT 0
+            )''')
+            
+            if self.app and hasattr(self.app, 'loading_status'):
+                self.app.loading_status.configure(text="Checking columns...")
+                self.app.root.update()
+            
+            # Check if all required columns exist
+            cursor.execute("""
+                SELECT COLUMN_NAME 
+                FROM information_schema.columns 
+                WHERE table_name = 'Members' AND table_schema = %s
+            """, (CLOUD_DB_NAME,))
+            columns = [column['COLUMN_NAME'] for column in cursor.fetchall()]
+            required_columns = ['rfid', 'memberid', 'name', 'student_num', 'program', 'year', 'date_registered', 'points']
+            for col in required_columns:
+                if col not in columns:
+                    cursor.execute(f"ALTER TABLE Members ADD COLUMN {col} TEXT")
+            
+            conn.commit()
+            conn.close()
+            elapsed = time.time() - start_time
+            ic(f"Database initialization completed in {elapsed:.2f} seconds")
+        except pymysql.MySQLError as e:
+            ic(f"Database initialization failed: {str(e)}")
+            raise Exception(f"Database initialization failed: {str(e)}")
+        except Exception as e:
+            ic(f"Unexpected error during database initialization: {str(e)}")
+            raise Exception(f"Unexpected error during database initialization: {str(e)}")
 
     def db_exists(self):
         return True  # Assume cloud DB always exists

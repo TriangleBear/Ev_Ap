@@ -334,10 +334,16 @@ class MainApp:
 
     def update_tables_dropdown(self):
         """Fetch tables list on demand instead of at startup"""
-        if not hasattr(self, 'tables_list') or not self.tables_list:
-            self.tables_list = DBActions.list_tables()
-        tables = [table for table in self.tables_list if table != 'Members']
-        return tables
+        try:
+            if not hasattr(self, 'tables_list') or not self.tables_list:
+                self.tables_list = DBActions.list_tables()
+            tables = [table for table in self.tables_list if table != 'Members']
+            if not tables:
+                ic("No tables found in the database.")
+            return tables
+        except Exception as e:
+            ic(f"Error fetching tables: {e}")
+            return []
 
     def update_db_status_label(self):
         """Update the database connection status label."""

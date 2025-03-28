@@ -93,7 +93,7 @@ class EventsView(CTk.CTkFrame):
             
     def delete_event(self, event_name):
         try:
-            with Database().get_db_connection() as conn:
+            with self.app.database.get_db_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(f"DROP TABLE IF EXISTS `{event_name}`")
                 conn.commit()

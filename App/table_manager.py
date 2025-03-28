@@ -32,7 +32,8 @@ class TableManager:
         scrollable_frame = CTk.CTkScrollableFrame(table_window)
         scrollable_frame.pack(fill='both', expand=True)
 
-        data = self.app.preloaded_data.get(selected_table, [])
+        # Fetch data from the cloud database
+        data = DBActions.fetch_table_data(selected_table)
 
         def display_data(filtered_data):
             for widget in scrollable_frame.winfo_children():

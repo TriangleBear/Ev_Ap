@@ -28,66 +28,39 @@ class MainApp:
         self.loading_label = None
         self.loading_status = None
         
-        # Show database selection prompt
-        self.show_db_selection_prompt()
+        # Show login prompt for cloud database credentials
+        self.show_login_prompt()
 
-    def show_db_selection_prompt(self):
-        self.db_selection_window = CTk.CTkToplevel(self.root)
-        self.db_selection_window.title("Select Database")
-        self.db_selection_window.geometry("300x150")
-        self.db_selection_window.resizable(False, False)
-        self.db_selection_window.transient(self.root)
-        self.db_selection_window.grab_set()
+    def show_login_prompt(self):
+        self.login_window = CTk.CTkToplevel(self.root)
+        self.login_window.title("Cloud Database Login")
+        self.login_window.geometry("300x200")
+        self.login_window.resizable(False, False)
+        self.login_window.transient(self.root)
+        self.login_window.grab_set()
         
-        CTk.CTkLabel(self.db_selection_window, text="Select Database:", font=CTk.CTkFont(size=16)).pack(pady=10)
+        CTk.CTkLabel(self.login_window, text="Cloud Database Login", font=CTk.CTkFont(size=16)).pack(pady=10)
         
-        self.db_var = CTk.StringVar(value="SQLite")
-        db_option_menu = CTk.CTkOptionMenu(self.db_selection_window, variable=self.db_var, values=["SQLite", "Cloud MySQL"])
-        db_option_menu.pack(pady=10)
-        
-        CTk.CTkButton(self.db_selection_window, text="Proceed", command=self.on_db_selection).pack(pady=10)
-        
-        self.center_window(self.db_selection_window)
-
-    def on_db_selection(self):
-        db_choice = self.db_var.get()
-        # Destroy the selection window first
-        self.db_selection_window.destroy()
-        if db_choice == "SQLite":
-            self.initialize_app(use_cloud=False)
-        else:
-            self.show_cloud_credentials_prompt()
-
-    def show_cloud_credentials_prompt(self):
-        self.cloud_credentials_window = CTk.CTkToplevel(self.root)
-        self.cloud_credentials_window.title("Cloud MySQL Credentials")
-        self.cloud_credentials_window.geometry("300x200")
-        self.cloud_credentials_window.resizable(False, False)
-        self.cloud_credentials_window.transient(self.root)
-        self.cloud_credentials_window.grab_set()
-        
-        CTk.CTkLabel(self.cloud_credentials_window, text="Cloud MySQL Credentials", font=CTk.CTkFont(size=16)).pack(pady=10)
-        
-        CTk.CTkLabel(self.cloud_credentials_window, text="Username:").pack(anchor="w", padx=20, pady=5)
-        self.cloud_user_entry = CTk.CTkEntry(self.cloud_credentials_window)
+        CTk.CTkLabel(self.login_window, text="Username:").pack(anchor="w", padx=20, pady=5)
+        self.cloud_user_entry = CTk.CTkEntry(self.login_window)
         self.cloud_user_entry.pack(padx=20, pady=5)
         
-        CTk.CTkLabel(self.cloud_credentials_window, text="Password:").pack(anchor="w", padx=20, pady=5)
-        self.cloud_password_entry = CTk.CTkEntry(self.cloud_credentials_window, show="*")
+        CTk.CTkLabel(self.login_window, text="Password:").pack(anchor="w", padx=20, pady=5)
+        self.cloud_password_entry = CTk.CTkEntry(self.login_window, show="*")
         self.cloud_password_entry.pack(padx=20, pady=5)
         
-        CTk.CTkButton(self.cloud_credentials_window, text="Proceed", command=self.on_cloud_credentials_entered).pack(pady=10)
+        CTk.CTkButton(self.login_window, text="Login", command=self.on_login_entered).pack(pady=10)
         
-        self.center_window(self.cloud_credentials_window)
+        self.center_window(self.login_window)
 
-    def on_cloud_credentials_entered(self):
+    def on_login_entered(self):
         cloud_user = self.cloud_user_entry.get()
         cloud_password = self.cloud_password_entry.get()
-        self.initialize_app(use_cloud=True, cloud_user=cloud_user, cloud_password=cloud_password)
+        self.initialize_app(cloud_user=cloud_user, cloud_password=cloud_password)
 
-    def initialize_app(self, use_cloud, cloud_user=None, cloud_password=None):
-        if hasattr(self, 'cloud_credentials_window'):
-            self.cloud_credentials_window.destroy()
+    def initialize_app(self, cloud_user=None, cloud_password=None):
+        if hasattr(self, 'login_window'):
+            self.login_window.destroy()
         
         # Create main layout first for better UX
         self.create_basic_layout()
@@ -107,18 +80,18 @@ class MainApp:
         self.root.update()  # Force UI update
         
         # Initialize database in background thread
-        self.database = Database(use_cloud=use_cloud, cloud_user=cloud_user, cloud_password=cloud_password, app=self)
+        self.database = Database(cloud_user=cloud_user, cloud_password=cloud_password, app=self)
         
         # Start initialization thread
         self.init_thread = threading.Thread(target=self.background_initialization, 
-                                           args=(use_cloud, cloud_user, cloud_password))
+                                           args=(cloud_user, cloud_password))
         self.init_thread.daemon = True
         self.init_thread.start()
         
         # Start polling for completion
         self.root.after(100, self.check_initialization_progress)
 
-    def background_initialization(self, use_cloud, cloud_user=None, cloud_password=None):
+    def background_initialization(self, cloud_user=None, cloud_password=None):
         """Perform heavy initialization tasks in background thread"""
         try:
             # Set database instance for DBActions
@@ -364,7 +337,5 @@ class MainApp:
         return tables
 
     def update_db_status_label(self):
-        if self.database.use_cloud:
-            self.db_status_label.configure(text="Connected to Cloud MySQL")
-        else:
-            self.db_status_label.configure(text="Connected to SQLite")
+        """Update the database connection status label."""
+        self.db_status_label.configure(text="Connected to Cloud MySQL")

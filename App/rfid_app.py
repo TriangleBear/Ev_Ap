@@ -9,6 +9,9 @@ from event_manager import EventManager
 from member_manager import MemberManager
 from table_manager import TableManager
 from home_view import HomeView
+from Menu_BT import ThemeManager #Sauce: "i created a new class, check it out. My codes are in Line 29 and 333"
+
+
 # Import other views when needed, not all at startup
 
 class MainApp:
@@ -23,6 +26,7 @@ class MainApp:
         CTk.set_default_color_theme("blue")
         
         # Initialize status variables
+        self.theme_manager = ThemeManager(self) #Sauce: "instantiate"
         self.initialized_views = {}
         self.db_initialized = False
         self.loading_label = None
@@ -222,7 +226,7 @@ class MainApp:
         self.sidebar_divider2.pack(pady=10)
         
         self.nav_buttons["settings"] = self.create_nav_button("Settings", self.show_settings_view)
-        self.nav_buttons["help"] = self.create_nav_button("Help", self.show_help_view)
+        self.nav_buttons["help"] = self.create_nav_button("Help", self.show_help_view)       
         self.nav_buttons["about"] = self.create_nav_button("About", self.show_about_view)
         
         # Create appearance mode toggle
@@ -323,8 +327,10 @@ class MainApp:
     def show_about_view(self):
         self.show_frame("about")
         
+
     def change_appearance_mode(self, new_appearance_mode):
         CTk.set_appearance_mode(new_appearance_mode)
+        self.theme_manager.apply_theme(new_appearance_mode) #Sauce: "check button icons to black during light mode"
 
     def preload_data(self):
         self.preloaded_data = {}

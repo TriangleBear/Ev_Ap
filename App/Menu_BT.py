@@ -1,6 +1,6 @@
 import customtkinter as CTk
 
-class ThemeManager:
+class ThemeManager: #Sauce: "Button Foreground change color during light,dark,system mode"
     def __init__(self, app):
         self.app = app
 

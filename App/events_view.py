@@ -1,5 +1,6 @@
 import customtkinter as CTk
 from CTkMessagebox import CTkMessagebox
+from dblite import DBActions, Database
 
 class EventsView(CTk.CTkFrame):
     def __init__(self, parent, app):
@@ -52,11 +53,7 @@ class EventsView(CTk.CTkFrame):
             widget.destroy()
             
         # Get list of events
-        try:
-            events = self.app.update_tables_dropdown()
-        except Exception as e:
-            events = []
-            print(f"Error fetching events: {e}")
+        events = self.app.update_tables_dropdown()
         
         if not events:
             no_events_label = CTk.CTkLabel(
@@ -72,10 +69,7 @@ class EventsView(CTk.CTkFrame):
             event_frame = CTk.CTkFrame(self.events_scrollable)
             event_frame.pack(fill="x", padx=5, pady=5)
             
-            # Handle event name correctly
-            event_name = event if isinstance(event, str) else event.get('TABLE_NAME', 'Unknown Event')
-            
-            CTk.CTkLabel(event_frame, text=event_name, width=200, anchor="w").pack(side="left", padx=5, pady=10)
+            CTk.CTkLabel(event_frame, text=event, width=200, anchor="w").pack(side="left", padx=5, pady=10)
             
             actions_frame = CTk.CTkFrame(event_frame, fg_color="transparent")
             actions_frame.pack(side="right", padx=5, pady=5)
@@ -83,13 +77,13 @@ class EventsView(CTk.CTkFrame):
             CTk.CTkButton(
                 actions_frame, 
                 text="View Attendance", 
-                command=lambda e=event_name: self.app.table_manager.create_table_window(e)
+                command=lambda e=event: self.app.table_manager.create_table_window(e)
             ).pack(side="left", padx=5)
             
             CTk.CTkButton(
                 actions_frame, 
                 text="Delete Event", 
-                command=lambda e=event_name: self.confirm_delete_event(e)
+                command=lambda e=event: self.confirm_delete_event(e)
             ).pack(side="left", padx=5)
             
     def confirm_delete_event(self, event_name):
@@ -99,7 +93,7 @@ class EventsView(CTk.CTkFrame):
             
     def delete_event(self, event_name):
         try:
-            with self.app.database.get_db_connection() as conn:
+            with Database().get_db_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(f"DROP TABLE IF EXISTS `{event_name}`")
                 conn.commit()

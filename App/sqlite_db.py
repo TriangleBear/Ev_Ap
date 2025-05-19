@@ -4,7 +4,7 @@ import time
 
 class SQLiteDB:
     def get_db_connection(self, timeout=None):
-        db_path = 'MEMBERS.db'
+        db_path = 'AHO_MEMBER.db'
         if not os.path.exists(db_path):
             open(db_path, 'w').close()
         
@@ -38,7 +38,7 @@ class SQLiteDB:
         conn.close()
 
     def db_exists(self):
-        db_path = 'MEMBERS.db'
+        db_path = 'AHO_MEMBER.db'
         return os.path.exists(db_path)
 
     def fetch_all_data(self):

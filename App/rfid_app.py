@@ -31,7 +31,7 @@ class MainApp:
         self.db_initialized = False
         self.loading_label = None
         self.loading_status = None
-
+        
         # Show database selection prompt
         self.root.withdraw() #Sauce: "bonus code, I made the mainApp set visible false unless you click proceed button in choosing a database"
         self.show_db_selection_prompt()
@@ -78,22 +78,22 @@ class MainApp:
         self.cloud_user_entry = CTk.CTkEntry(self.cloud_credentials_window)
         self.cloud_user_entry.pack(padx=20, pady=5)
         
-        CTk.CTkLabel(self.login_window, text="Password:").pack(anchor="w", padx=20, pady=5)
-        self.cloud_password_entry = CTk.CTkEntry(self.login_window, show="*")
+        CTk.CTkLabel(self.cloud_credentials_window, text="Password:").pack(anchor="w", padx=20, pady=5)
+        self.cloud_password_entry = CTk.CTkEntry(self.cloud_credentials_window, show="*")
         self.cloud_password_entry.pack(padx=20, pady=5)
         
-        CTk.CTkButton(self.login_window, text="Login", command=self.on_login_entered).pack(pady=10)
+        CTk.CTkButton(self.cloud_credentials_window, text="Proceed", command=self.on_cloud_credentials_entered).pack(pady=10)
         
-        self.center_window(self.login_window)
+        self.center_window(self.cloud_credentials_window)
 
-    def on_login_entered(self):
+    def on_cloud_credentials_entered(self):
         cloud_user = self.cloud_user_entry.get()
         cloud_password = self.cloud_password_entry.get()
-        self.initialize_app(cloud_user=cloud_user, cloud_password=cloud_password)
+        self.initialize_app(use_cloud=True, cloud_user=cloud_user, cloud_password=cloud_password)
 
-    def initialize_app(self, cloud_user=None, cloud_password=None):
-        if hasattr(self, 'login_window'):
-            self.login_window.destroy()
+    def initialize_app(self, use_cloud, cloud_user=None, cloud_password=None):
+        if hasattr(self, 'cloud_credentials_window'):
+            self.cloud_credentials_window.destroy()
         
         # Create main layout first for better UX
         self.create_basic_layout()
@@ -113,18 +113,18 @@ class MainApp:
         self.root.update()  # Force UI update
         
         # Initialize database in background thread
-        self.database = Database(cloud_user=cloud_user, cloud_password=cloud_password, app=self)
+        self.database = Database(use_cloud=use_cloud, cloud_user=cloud_user, cloud_password=cloud_password, app=self)
         
         # Start initialization thread
         self.init_thread = threading.Thread(target=self.background_initialization, 
-                                           args=(cloud_user, cloud_password))
+                                           args=(use_cloud, cloud_user, cloud_password))
         self.init_thread.daemon = True
         self.init_thread.start()
         
         # Start polling for completion
         self.root.after(100, self.check_initialization_progress)
 
-    def background_initialization(self, cloud_user=None, cloud_password=None):
+    def background_initialization(self, use_cloud, cloud_user=None, cloud_password=None):
         """Perform heavy initialization tasks in background thread"""
         try:
             # Set database instance for DBActions
@@ -315,10 +315,7 @@ class MainApp:
         self.show_frame("events")
         
     def show_members_view(self):
-        """Show the Members view."""
         self.show_frame("members")
-        if "members" in self.initialized_views:
-            self.initialized_views["members"].create_widgets()
         
     def show_reports_view(self):
         self.show_frame("reports")
@@ -369,17 +366,13 @@ class MainApp:
 
     def update_tables_dropdown(self):
         """Fetch tables list on demand instead of at startup"""
-        try:
-            if not hasattr(self, 'tables_list') or not self.tables_list:
-                self.tables_list = DBActions.list_tables()
-            tables = [table for table in self.tables_list if table != 'Members']
-            if not tables:
-                ic("No tables found in the database.")
-            return tables
-        except Exception as e:
-            ic(f"Error fetching tables: {e}")
-            return []
+        if not hasattr(self, 'tables_list') or not self.tables_list:
+            self.tables_list = DBActions.list_tables()
+        tables = [table for table in self.tables_list if table != 'Members']
+        return tables
 
     def update_db_status_label(self):
-        """Update the database connection status label."""
-        self.db_status_label.configure(text="Connected to Cloud MySQL")
+        if self.database.use_cloud:
+            self.db_status_label.configure(text="Connected to Cloud MySQL")
+        else:
+            self.db_status_label.configure(text="Connected to SQLite")

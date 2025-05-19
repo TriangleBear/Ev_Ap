@@ -61,7 +61,7 @@ class DBActions:
                 cursor.execute("SHOW TABLES")
                 tables = cursor.fetchall()
                 # Ensure the result is a list of table names
-                return [table['Tables_in_' + "AHO_EVENTS"] for table in tables]  # Adjust key based on database name
+                return [list(table.values())[0] for table in tables]  # Dynamically extract table names
         except Exception as e:
             ic(f"Error listing tables: {e}")
             return []

@@ -9,6 +9,9 @@ from event_manager import EventManager
 from member_manager import MemberManager
 from table_manager import TableManager
 from home_view import HomeView
+from Menu_BT import ThemeManager #Sauce: "i created a new class, check it out.Also my codes are located at Line 29, 26, 61, 335"
+
+
 # Import other views when needed, not all at startup
 
 class MainApp:
@@ -23,26 +26,56 @@ class MainApp:
         CTk.set_default_color_theme("blue")
         
         # Initialize status variables
+        self.theme_manager = ThemeManager(self) #Sauce: "instantiate Menu_BT"
         self.initialized_views = {}
         self.db_initialized = False
         self.loading_label = None
         self.loading_status = None
-        
-        # Show login prompt for cloud database credentials
-        self.show_login_prompt()
 
-    def show_login_prompt(self):
-        self.login_window = CTk.CTkToplevel(self.root)
-        self.login_window.title("Cloud Database Login")
-        self.login_window.geometry("300x200")
-        self.login_window.resizable(False, False)
-        self.login_window.transient(self.root)
-        self.login_window.grab_set()
+        # Show database selection prompt
+        self.root.withdraw() #Sauce: "bonus code, I made the mainApp set visible false unless you click proceed button in choosing a database"
+        self.show_db_selection_prompt()
+
+    def show_db_selection_prompt(self):
+        self.db_selection_window = CTk.CTkToplevel(self.root)
+        self.db_selection_window.title("Select Database")
+        self.db_selection_window.geometry("300x150")
+        self.db_selection_window.resizable(False, False)
+        self.db_selection_window.transient(self.root)
+        self.db_selection_window.grab_set()
         
-        CTk.CTkLabel(self.login_window, text="Cloud Database Login", font=CTk.CTkFont(size=16)).pack(pady=10)
+        CTk.CTkLabel(self.db_selection_window, text="Select Database:", font=CTk.CTkFont(size=16)).pack(pady=10)
         
-        CTk.CTkLabel(self.login_window, text="Username:").pack(anchor="w", padx=20, pady=5)
-        self.cloud_user_entry = CTk.CTkEntry(self.login_window)
+        self.db_var = CTk.StringVar(value="SQLite")
+        db_option_menu = CTk.CTkOptionMenu(self.db_selection_window, variable=self.db_var, values=["SQLite", "Cloud MySQL"])
+        db_option_menu.pack(pady=10)
+        
+        CTk.CTkButton(self.db_selection_window, text="Proceed", command=self.on_db_selection).pack(pady=10)
+        
+        self.center_window(self.db_selection_window)
+
+    def on_db_selection(self):
+        db_choice = self.db_var.get()
+        # Destroy the selection window first
+        self.db_selection_window.destroy()
+        self.root.deiconify() #Sauce: "MainApp Frame will be visible when clicking the proceed button"
+        if db_choice == "SQLite":
+            self.initialize_app(use_cloud=False)
+        else:
+            self.show_cloud_credentials_prompt()
+
+    def show_cloud_credentials_prompt(self):
+        self.cloud_credentials_window = CTk.CTkToplevel(self.root)
+        self.cloud_credentials_window.title("Cloud MySQL Credentials")
+        self.cloud_credentials_window.geometry("300x200")
+        self.cloud_credentials_window.resizable(False, False)
+        self.cloud_credentials_window.transient(self.root)
+        self.cloud_credentials_window.grab_set()
+        
+        CTk.CTkLabel(self.cloud_credentials_window, text="Cloud MySQL Credentials", font=CTk.CTkFont(size=16)).pack(pady=10)
+        
+        CTk.CTkLabel(self.cloud_credentials_window, text="Username:").pack(anchor="w", padx=20, pady=5)
+        self.cloud_user_entry = CTk.CTkEntry(self.cloud_credentials_window)
         self.cloud_user_entry.pack(padx=20, pady=5)
         
         CTk.CTkLabel(self.login_window, text="Password:").pack(anchor="w", padx=20, pady=5)
@@ -195,7 +228,7 @@ class MainApp:
         self.sidebar_divider2.pack(pady=10)
         
         self.nav_buttons["settings"] = self.create_nav_button("Settings", self.show_settings_view)
-        self.nav_buttons["help"] = self.create_nav_button("Help", self.show_help_view)
+        self.nav_buttons["help"] = self.create_nav_button("Help", self.show_help_view)       
         self.nav_buttons["about"] = self.create_nav_button("About", self.show_about_view)
         
         # Create appearance mode toggle
@@ -299,8 +332,10 @@ class MainApp:
     def show_about_view(self):
         self.show_frame("about")
         
+
     def change_appearance_mode(self, new_appearance_mode):
         CTk.set_appearance_mode(new_appearance_mode)
+        self.theme_manager.apply_theme(new_appearance_mode) #Sauce: "check button icons to black during light mode"
 
     def preload_data(self):
         self.preloaded_data = {}

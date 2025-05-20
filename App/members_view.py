@@ -6,23 +6,29 @@ class MembersView(CTk.CTkFrame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
-        self.initialized = False
-        self.members_cache = []  # Cache for member data
-        self.create_widgets()  # Ensure widgets are created during initialization
+        self.create_widgets()
 
     def create_widgets(self):
-        # Initialize UI components only when the view is shown
-        if self.initialized:
-            return
-        self.initialized = True
-
         self.header = CTk.CTkLabel(self, text="Members Management", font=CTk.CTkFont(size=24, weight="bold"))
         self.header.pack(pady=20)
         
-        # Search bar
-        self.search_entry = CTk.CTkEntry(self, placeholder_text="Search members...")
-        self.search_entry.pack(padx=20, pady=10, fill="x")
-        self.search_entry.bind('<KeyRelease>', self.search_members)
+        # Buttons frame
+        self.button_frame = CTk.CTkFrame(self)
+        self.button_frame.pack(fill="x", padx=20, pady=10)
+        
+        self.register_member_btn = CTk.CTkButton(
+            self.button_frame, 
+            text="Register New Member", 
+            command=self.app.member_manager.register_member_button_clicked
+        )
+        self.register_member_btn.pack(side="left", padx=10, pady=10)
+        
+        self.refresh_btn = CTk.CTkButton(
+            self.button_frame,
+            text="Refresh",
+            command=self.refresh_members
+        )
+        self.refresh_btn.pack(side="left", padx=10, pady=10)
         
         # Members list frame
         self.members_frame = CTk.CTkFrame(self)
@@ -32,6 +38,7 @@ class MembersView(CTk.CTkFrame):
         self.list_header = CTk.CTkFrame(self.members_frame)
         self.list_header.pack(fill="x", padx=10, pady=5)
         
+        # Add RFID column to the header
         CTk.CTkLabel(self.list_header, text="RFID", width=200, anchor="w", font=CTk.CTkFont(weight="bold")).pack(side="left", padx=5)
         CTk.CTkLabel(self.list_header, text="Member ID", width=200, anchor="w", font=CTk.CTkFont(weight="bold")).pack(side="left", padx=5)
         CTk.CTkLabel(self.list_header, text="Name", width=200, anchor="w", font=CTk.CTkFont(weight="bold")).pack(side="left", padx=5)
@@ -48,41 +55,13 @@ class MembersView(CTk.CTkFrame):
         for widget in self.members_scrollable.winfo_children():
             widget.destroy()
             
-        # Fetch and cache member data
-        try:
-            self.members_cache = DBActions.fetch_table_data('Members')
-        except Exception as e:
-            self.members_cache = []
-            print(f"Error fetching members: {e}")
+        # Get list of members
+        members = DBActions.fetch_table_data('Members')
         
-        if not self.members_cache:
-            no_members_label = CTk.CTkLabel(
-                self.members_scrollable,
-                text="No members found. Use the 'Register New Member' button to add one.",
-                anchor="center"
-            )
-            no_members_label.pack(pady=50)
-            return
-            
-        # Display all members
-        self.display_members(self.members_cache)
-
-    def search_members(self, event):
-        query = self.search_entry.get().lower()
-        filtered_members = [
-            member for member in self.members_cache if any(query in str(value).lower() for value in member.values())
-        ]
-        self.display_members(filtered_members)
-
-    def display_members(self, members):
-        # Clear existing member items
-        for widget in self.members_scrollable.winfo_children():
-            widget.destroy()
-            
         if not members:
             no_members_label = CTk.CTkLabel(
                 self.members_scrollable,
-                text="No matching members found.",
+                text="No members found. Use the 'Register New Member' button to add one.",
                 anchor="center"
             )
             no_members_label.pack(pady=50)
@@ -93,11 +72,38 @@ class MembersView(CTk.CTkFrame):
             member_frame = CTk.CTkFrame(self.members_scrollable)
             member_frame.pack(fill="x", padx=5, pady=5)
             
-            # Access dictionary keys instead of indices
-            CTk.CTkLabel(member_frame, text=member['rfid'], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # rfid
-            CTk.CTkLabel(member_frame, text=member['memberid'], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # memberid
-            CTk.CTkLabel(member_frame, text=member['name'], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # name
-            CTk.CTkLabel(member_frame, text=member['student_num'], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # student_num
+            # Handle both tuple and dictionary results
+            if isinstance(member, dict) or isinstance(member, sqlite3.Row):
+                # Dictionary-like object
+                CTk.CTkLabel(member_frame, text=member['rfid'], width=200, anchor="w").pack(side="left", padx=5, pady=10)
+                CTk.CTkLabel(member_frame, text=member['memberid'], width=200, anchor="w").pack(side="left", padx=5, pady=10)
+                CTk.CTkLabel(member_frame, text=member['name'], width=200, anchor="w").pack(side="left", padx=5, pady=10)
+                CTk.CTkLabel(member_frame, text=member['student_num'], width=200, anchor="w").pack(side="left", padx=5, pady=10)
+            else:
+                # Tuple
+                # Assuming order: rfid, memberid, name, student_num, ...
+                CTk.CTkLabel(member_frame, text=member[0], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # rfid
+                CTk.CTkLabel(member_frame, text=member[1], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # memberid
+                CTk.CTkLabel(member_frame, text=member[2], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # name
+                CTk.CTkLabel(member_frame, text=member[3], width=200, anchor="w").pack(side="left", padx=5, pady=10)  # student_num
+
+    def search_members(self, event):
+        query = self.search_entry.get().lower()
+        filtered_members = [
+            member for member in DBActions.fetch_table_data('Members') if any(query in str(cell).lower() for cell in member)
+        ]
+        self.display_members(filtered_members)
+
+    def display_members(self, members):
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+
+        for i, member in enumerate(members):
+            values = list(dict(member).values()) if isinstance(member, sqlite3.Row) else member
+            for j, cell_data in enumerate(values):
+                cell = CTk.CTkLabel(self.scrollable_frame, text=cell_data, corner_radius=0, width=100, anchor='w')
+                cell.grid(row=i, column=j, padx=5, pady=5, sticky='w')
+                cell.bind("<Button-3>", lambda e, text=cell_data: self.copy_to_clipboard(text))
 
     def copy_to_clipboard(self, text):
         self.app.root.clipboard_clear()

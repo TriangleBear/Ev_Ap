@@ -12,13 +12,11 @@ class TableManager:
         self.app = app
 
     def create_table_window(self, selected_table):
-        table_window = CTk.CTkToplevel(self.app.root)  # Use CTkToplevel to ensure it's a child window
+        table_window = CTk.CTkToplevel(self.app.root)
         table_window.title(f"Event: {selected_table}")
         table_window.geometry('800x600')
-        table_window.attributes('-topmost', False)  # Allow the main window to remain active
+        table_window.attributes('-topmost', True)
         table_window.resizable(True, True)
-        table_window.transient(self.app.root)  # Make the attendance window modal
-        table_window.grab_set()  # Prevent interaction with the main window until this window is closed
 
         def search_table(event):
             query = search_entry.get().lower()
@@ -34,26 +32,18 @@ class TableManager:
         scrollable_frame = CTk.CTkScrollableFrame(table_window)
         scrollable_frame.pack(fill='both', expand=True)
 
-        # Fetch data from the cloud database
-        data = DBActions.fetch_table_data(selected_table)
+        data = self.app.preloaded_data.get(selected_table, [])
 
         def display_data(filtered_data):
             for widget in scrollable_frame.winfo_children():
                 widget.destroy()
 
-            # Add header row
-            if filtered_data:
-                header_frame = CTk.CTkFrame(scrollable_frame)
-                header_frame.pack(fill="x", padx=5, pady=5)
-                for key in filtered_data[0].keys():
-                    CTk.CTkLabel(header_frame, text=key, width=150, anchor="w", font=CTk.CTkFont(weight="bold")).pack(side="left", padx=5)
-
-            # Add data rows
             for i, row in enumerate(filtered_data):
-                row_frame = CTk.CTkFrame(scrollable_frame)
-                row_frame.pack(fill="x", padx=5, pady=5)
-                for value in row.values():
-                    CTk.CTkLabel(row_frame, text=value, width=150, anchor="w").pack(side="left", padx=5)
+                values = list(dict(row).values()) if isinstance(row, sqlite3.Row) else row
+                for j, cell_data in enumerate(values):
+                    cell = CTk.CTkLabel(scrollable_frame, text=cell_data, corner_radius=0, width=100, anchor='w')
+                    cell.grid(row=i, column=j, padx=5, pady=5, sticky='w')
+                    cell.bind("<Button-3>", lambda e, text=cell_data: self.copy_to_clipboard(text))
 
         display_data(data)
 
@@ -81,46 +71,65 @@ class TableManager:
         export_button.pack(side='left', padx=5)
 
     def rfid_scan_event(self, entry_widget, table_window, selected_table, display_data, data):
-        rfid_num = entry_widget.get().strip()
+        rfid_num = entry_widget.get()
 
-        # Check if RFID is cached to prevent duplicate scans within 15 seconds
         current_time = time.time()
         if rfid_num in self.app.member_manager.rfid_cache:
             last_scan_time = self.app.member_manager.rfid_cache[rfid_num]
             if current_time - last_scan_time < 15:
-                CTkMessagebox(title="RFID Scan", message=f"{rfid_num} was scanned recently. Ignoring scan.")
-                entry_widget.delete(0, CTk.END)
+                try:
+                    messagebox1 = CTkMessagebox(title="RFID Scan", message=f"{rfid_num} was scanned within the last 15 seconds. Ignoring scan...")
+                    if table_window.winfo_exists():
+                        table_window.after(4500, lambda: self.safely_destroy_messagebox(messagebox1))
+                except Exception as e:
+                    print(f"Error showing RFID scan message: {e}")
                 return
 
-        # Check if the member has already attended the event
         if DBActions.member_attended_event(selected_table, rfid_num):
-            CTkMessagebox(title="RFID Scan", message="Member has already attended this event.")
-            entry_widget.delete(0, CTk.END)
+            try:
+                messagebox2 = CTkMessagebox(title="RFID Scan", message="Member has already attended this event.")
+                if table_window.winfo_exists():
+                    table_window.after(4500, lambda: self.safely_destroy_messagebox(messagebox2))
+                entry_widget.delete(0, CTk.END)
+            except Exception as e:
+                print(f"Error showing attendance message: {e}")
             return
 
-        # Check if the RFID exists in the database
-        member = DBActions.member_exists(rfid_num)
-        if not member:
-            CTkMessagebox(title="RFID Scan Error", message="RFID number not found.")
-            entry_widget.delete(0, CTk.END)
-            return
+        def insert_digit(index):
+            if index < len(rfid_num):
+                member = DBActions.member_exists(rfid_num)
+                if not member:
+                    try:
+                        messagebox2 = CTkMessagebox(title="RFID Scan Error", message="RFID number not found")
+                        if table_window.winfo_exists():
+                            table_window.after(1000, lambda: self.safely_destroy_messagebox(messagebox2))
+                        entry_widget.delete(0, CTk.END)
+                    except Exception as e:
+                        print(f"Error showing RFID not found message: {e}")
+                    return
 
-        # Record attendance for the member
-        try:
-            DBActions.attendance_member_event(selected_table, rfid_num)
-            points = self.app.event_manager.points_per_event.get(selected_table, 0.10)
-            DBActions.add_points(rfid_num, points)
-            self.app.member_manager.rfid_cache[rfid_num] = current_time
-            CTkMessagebox(title="RFID Scan", message="Attendance recorded successfully.")
-            entry_widget.delete(0, CTk.END)
-        except Exception as e:
-            CTkMessagebox(title="RFID Scan Error", message=f"Error recording attendance: {str(e)}")
-            return
+                entry_widget.insert(CTk.END, rfid_num[index])
+                DBActions.attendance_member_event(selected_table, rfid_num)
+                refresh_data()
+                try:
+                    messagebox2 = CTkMessagebox(title="RFID Scan", message="RFID recorded")
+                    if table_window.winfo_exists():
+                        table_window.after(1000, lambda: self.safely_destroy_messagebox(messagebox2))
+                    entry_widget.delete(0, CTk.END)
+                except Exception as e:
+                    print(f"Error showing RFID recorded message: {e}")
 
-        # Refresh the displayed data
-        updated_data = DBActions.fetch_table_data(selected_table)
-        self.app.preloaded_data[selected_table] = updated_data
-        display_data(updated_data)
+                points = self.app.event_manager.points_per_event.get(selected_table, 0.10)
+                ic(f"Adding {points} points to RFID {rfid_num} for event {selected_table}")
+                DBActions.add_points(rfid_num, points)
+
+        def refresh_data():
+            updated_data = DBActions.fetch_table_data(selected_table)
+            self.app.preloaded_data[selected_table] = updated_data
+            display_data(updated_data)
+
+        self.app.member_manager.rfid_cache[rfid_num] = current_time
+        insert_digit(0)
 
     def safely_destroy_messagebox(self, messagebox):
         try:

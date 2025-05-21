@@ -127,6 +127,9 @@ class MainApp:
     def background_initialization(self, use_cloud, cloud_user=None, cloud_password=None):
         """Perform heavy initialization tasks in background thread"""
         try:
+            # Preload only essential data
+            self.preload_essential_data()
+
             # Set database instance for DBActions
             DBActions.set_db_instance(self.database)
             
@@ -137,9 +140,6 @@ class MainApp:
             self.event_manager = EventManager(self)
             self.member_manager = MemberManager(self)
             self.table_manager = TableManager(self)
-            
-            # Preload only essential data
-            self.preload_essential_data()
             
             # Mark initialization as complete
             self.db_initialized = True

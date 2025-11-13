@@ -2,8 +2,23 @@ import datetime
 from icecream import ic
 import sqlite3
 import os
+import re
 
 class DBActions:
+    @staticmethod
+    def _sanitize_table_name(table_name):
+        """Sanitize table name to prevent SQL injection.
+        Only allows alphanumeric characters and underscores.
+        """
+        # Replace spaces with underscores
+        table_name = table_name.replace(" ", "_")
+        # Remove any character that is not alphanumeric or underscore
+        table_name = re.sub(r'[^\w]', '', table_name)
+        # Ensure the name is not empty
+        if not table_name:
+            raise ValueError("Invalid table name")
+        return table_name
+
     @staticmethod
     def member_register(rfid, memberid, name, student_num, program, year):
         created_on = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -39,11 +54,9 @@ class DBActions:
     def list_tables():
         try:
             with Database.get_db_connection() as conn:
-                conn = Database.get_db_connection()
                 cursor = conn.cursor()
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
                 tables = cursor.fetchall()
-                conn.close()
             # Filter out 'Members' table
             return [table[0] for table in tables if table[0] not in ['Members', 'sqlite_sequence']]
         except Exception as e:
@@ -52,7 +65,7 @@ class DBActions:
 
     @staticmethod
     def create_event_table(table_name):
-        table_name = table_name.replace(" ", "_")
+        table_name = DBActions._sanitize_table_name(table_name)
         try:
             with Database.get_db_connection() as conn:
                 cursor = conn.cursor()
@@ -79,7 +92,8 @@ class DBActions:
                 if table_name == 'Members':
                     sql = "SELECT DISTINCT rfid, memberid, name, student_num, date_registered FROM Members"
                 else:
-                    sql = f"SELECT DISTINCT memberid, name, student_num, attendance_time FROM {table_name}"
+                    table_name = DBActions._sanitize_table_name(table_name)
+                    sql = f"SELECT DISTINCT memberid, name, student_num, attendance_time FROM `{table_name}`"
                 cursor.execute(sql)
                 result = cursor.fetchall()
             return result
@@ -96,9 +110,10 @@ class DBActions:
             name = member['name']
             student_num = member['student_num']
 
+            table_name = DBActions._sanitize_table_name(table_name)
             with Database.get_db_connection() as conn:
                 cursor = conn.cursor()
-                sql = f"INSERT INTO {table_name} (rfid, memberid, name, student_num) VALUES (?, ?, ?, ?)"
+                sql = f"INSERT INTO `{table_name}` (rfid, memberid, name, student_num) VALUES (?, ?, ?, ?)"
                 cursor.execute(sql, (rfid, memberid, name, student_num))
                 conn.commit()
             return 0
@@ -162,9 +177,10 @@ class DBActions:
     @staticmethod
     def member_attended_event(table_name, rfid):
         try:
+            table_name = DBActions._sanitize_table_name(table_name)
             with Database.get_db_connection() as conn:
                 cursor = conn.cursor()
-                sql = f"SELECT COUNT(*) FROM {table_name} WHERE rfid = ?"
+                sql = f"SELECT COUNT(*) FROM `{table_name}` WHERE rfid = ?"
                 cursor.execute(sql, (rfid,))
                 result = cursor.fetchone()
             return result[0] > 0

@@ -83,6 +83,7 @@ class DBActions:
             return 0
         except Exception as e:
             ic(e)
+            return -1
 
     @staticmethod
     def fetch_table_data(table_name):
@@ -99,6 +100,7 @@ class DBActions:
             return result
         except Exception as e:
             ic(e)
+            return []
 
     @staticmethod
     def attendance_member_event(table_name, rfid):

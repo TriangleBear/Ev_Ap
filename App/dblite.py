@@ -36,7 +36,7 @@ class DBActions:
                 conn.commit()
             return 0
         except Exception as e:
-            ic(e)  # Debugging line to print the exception
+            ic(f"Error listing tables: {e}")  # Debugging line to print the exception
             return -1
 
     @staticmethod
@@ -49,7 +49,7 @@ class DBActions:
                 result = cursor.fetchone()
             return result if result else None
         except Exception as e:
-            ic(e)  # Debugging line to print the exception
+            ic(f"Error listing tables: {e}") # Debugging line to print the exception
             return None
 
     @staticmethod
@@ -58,7 +58,7 @@ class DBActions:
             db_instance = DBActions.get_db_instance()
             with db_instance.get_db_connection() as conn:
                 cursor = conn.cursor()
-                
+                 
                 # Different query based on database type
                 if db_instance.use_cloud:
                     cursor.execute("SHOW TABLES")
@@ -72,7 +72,7 @@ class DBActions:
                     # Filter out 'Members' table
                     return [table[0] for table in tables if table[0] not in ['Members', 'sqlite_sequence']]
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return []
 
     @staticmethod
@@ -82,6 +82,7 @@ class DBActions:
             db_instance = DBActions.get_db_instance()
             with db_instance.get_db_connection() as conn:
                 cursor = conn.cursor()
+                
                 
                 # Different SQL based on database type
                 if db_instance.use_cloud:
@@ -109,7 +110,7 @@ class DBActions:
                 conn.commit()
             return 0
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return -1
 
     @staticmethod
@@ -125,7 +126,7 @@ class DBActions:
                 result = cursor.fetchall()
             return result if result else []
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return []
 
     @staticmethod
@@ -146,7 +147,7 @@ class DBActions:
                     callback(result if result else [])
                 return result if result else []
             except Exception as e:
-                ic(e)
+                ic(f"Error listing tables: {e}")
                 if callback:
                     callback([])
                 return []
@@ -166,7 +167,7 @@ class DBActions:
                 result = cursor.fetchall()
             return [{'name': row['name'], 'points': row['points']} for row in result]
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return []
 
     @staticmethod
@@ -186,7 +187,7 @@ class DBActions:
                 conn.commit()
             return 0
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return -1
 
     @staticmethod
@@ -199,7 +200,7 @@ class DBActions:
                 result = cursor.fetchone()
             return result['name'] if result else None
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return None
 
     @staticmethod
@@ -213,7 +214,7 @@ class DBActions:
                 ic(f"Added {points} points to RFID {rfid}")  # Debugging line to confirm points addition
             return 0
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return -1
 
     @staticmethod
@@ -226,7 +227,7 @@ class DBActions:
                 result = cursor.fetchone()
             return result['points'] if result else None
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return None
 
     @staticmethod
@@ -239,7 +240,7 @@ class DBActions:
                 conn.commit()
             return 0
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return -1
 
     @staticmethod
@@ -252,7 +253,7 @@ class DBActions:
                 result = cursor.fetchone()
             return result[0] > 0
         except Exception as e:
-            ic(e)
+            ic(f"Error listing tables: {e}")
             return False
 
 

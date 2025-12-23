@@ -32,35 +32,15 @@ class MainApp:
         self.loading_label = None
         self.loading_status = None
         
-        # Show database selection prompt
-        self.root.withdraw() #Sauce: "bonus code, I made the mainApp set visible false unless you click proceed button in choosing a database"
-        self.show_db_selection_prompt()
+        # Initialize directly (SQLite-only)
+        self.initialize_app()
 
     def show_db_selection_prompt(self):
-        self.db_selection_window = CTk.CTkToplevel(self.root)
-        self.db_selection_window.title("Select Database")
-        self.db_selection_window.geometry("300x150")
-        self.db_selection_window.resizable(False, False)
-        self.db_selection_window.transient(self.root)
-        self.db_selection_window.grab_set()
-        
-        CTk.CTkLabel(self.db_selection_window, text="Select Database:", font=CTk.CTkFont(size=16)).pack(pady=10)
-        
-        self.db_var = CTk.StringVar(value="SQLite")
-        db_option_menu = CTk.CTkOptionMenu(self.db_selection_window, variable=self.db_var, values=["SQLite"])
-        db_option_menu.pack(pady=10)
-        
-        CTk.CTkButton(self.db_selection_window, text="Proceed", command=self.on_db_selection).pack(pady=10)
-        
-        self.center_window(self.db_selection_window)
+        pass
 
     def on_db_selection(self):
-        db_choice = self.db_var.get()
-        # Destroy the selection window first
-        self.db_selection_window.destroy()
-        self.root.deiconify() #Sauce: "MainApp Frame will be visible when clicking the proceed button"
-        # Always initialize with SQLite-only
-        self.initialize_app()
+        # Selection removed; initialization occurs at startup
+        return
 
     # Cloud credentials UI removed: SQLite-only mode
 

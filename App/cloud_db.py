@@ -1,6 +1,5 @@
 import pymysql
 import sqlite3  # Add this import
-from creds import CLOUD_DB_HOST, CLOUD_DB_PORT, CLOUD_DB_NAME
 import customtkinter as CTk  # Add this import for CTKProgressBar
 import time
 

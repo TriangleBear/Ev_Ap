@@ -16,7 +16,7 @@ class AboutView(CTk.CTkFrame):
         creator_lable = CTk.CTkLabel(self, text="Created by: TriangleBear")
         creator_lable.pack(pady=10)
 
-        version_label = CTk.CTkLabel(self, text="Version: 3.2.3")
+        version_label = CTk.CTkLabel(self, text="Version: 3.3.1")
         version_label.pack(pady=10)
 
         close_button = CTk.CTkButton(self, text="Close", command=self.close)

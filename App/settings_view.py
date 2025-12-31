@@ -26,32 +26,32 @@ class SettingsView(CTk.CTkFrame):
         self.appearance_mode_menu.pack(anchor="w", padx=10, pady=10)
         self.appearance_mode_menu.set("System")
         
-        db_label = CTk.CTkLabel(self.options_frame, text="Database Mode:", font=CTk.CTkFont(size=18))
-        db_label.pack(anchor="w", padx=10, pady=10)
+    #     db_label = CTk.CTkLabel(self.options_frame, text="Database Mode:", font=CTk.CTkFont(size=18))
+    #     db_label.pack(anchor="w", padx=10, pady=10)
 
-        self.db_mode_menu = CTk.CTkOptionMenu(
-            self.options_frame,
-            values=["SQLite"],
-            command=lambda m: None
-        )
-        self.db_mode_menu.pack(anchor="w", padx=10, pady=10)
-        self.db_mode_menu.set("SQLite")
+    #     self.db_mode_menu = CTk.CTkOptionMenu(
+    #         self.options_frame,
+    #         values=["SQLite"],
+    #         command=lambda m: None
+    #     )
+    #     self.db_mode_menu.pack(anchor="w", padx=10, pady=10)
+    #     self.db_mode_menu.set("SQLite")
         
-        self.apply_button = CTk.CTkButton(self.options_frame, text="Apply", command=self.apply_db_settings)
-        self.apply_button.pack(anchor="w", padx=10, pady=20)
+    #     self.apply_button = CTk.CTkButton(self.options_frame, text="Apply", command=self.apply_db_settings)
+    #     self.apply_button.pack(anchor="w", padx=10, pady=20)
 
-    def change_db_mode(self, mode):
-        # Only SQLite supported now; nothing to toggle
-        return
+    # def change_db_mode(self, mode):
+    #     # Only SQLite supported now; nothing to toggle
+    #     return
 
-    def apply_db_settings(self):
-        # Ensure the app uses SQLite-only Database
-        self.app.database = Database(app=self.app)
-        DBActions.set_db_instance(self.app.database)
-        self.app.database.initialize_db()
-        self.app.update_db_status_label()
-        CTkMessagebox(
-            title="Database Mode",
-            message="Database mode set to SQLite.",
-            icon="check"
-        )
+    # def apply_db_settings(self):
+    #     # Ensure the app uses SQLite-only Database
+    #     self.app.database = Database(app=self.app)
+    #     DBActions.set_db_instance(self.app.database)
+    #     self.app.database.initialize_db()
+    #     self.app.update_db_status_label()
+    #     CTkMessagebox(
+    #         title="Database Mode",
+    #         message="Database mode set to SQLite.",
+    #         icon="check"
+    #     )

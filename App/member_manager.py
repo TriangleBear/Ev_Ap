@@ -62,38 +62,38 @@ class MemberManager:
         submit_button = CTk.CTkButton(register_window, text="Submit", command=member_register)
         submit_button.pack(pady=5)
 
-    def redeem_points_button_clicked(self):
-        redeem_window = CTk.CTkToplevel(self.app.root)
-        redeem_window.title("Redeem Points")
-        redeem_window.geometry("400x300")
-        redeem_window.attributes('-topmost', True)
-        redeem_window.resizable(False, False)
-        self.app.center_window(redeem_window)
+    # def redeem_points_button_clicked(self):
+    #     redeem_window = CTk.CTkToplevel(self.app.root)
+    #     redeem_window.title("Redeem Points")
+    #     redeem_window.geometry("400x300")
+    #     redeem_window.attributes('-topmost', True)
+    #     redeem_window.resizable(False, False)
+    #     self.app.center_window(redeem_window)
 
-        rfid_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter RFID")
-        rfid_entry.pack(pady=5)
+    #     rfid_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter RFID")
+    #     rfid_entry.pack(pady=5)
 
-        points_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter points to redeem")
-        points_entry.pack(pady=5)
+    #     points_entry = CTk.CTkEntry(redeem_window, placeholder_text="Enter points to redeem")
+    #     points_entry.pack(pady=5)
 
-        def redeem_points():
-            rfid_num = rfid_entry.get().strip()
-            if not rfid_num:
-                CTkMessagebox(title="Redeem Points", message="RFID cannot be empty!")
-                return
-            points = DBActions.get_member_points(rfid_num)
-            if points is None:
-                CTkMessagebox(title="Redeem Points", message="Member not found!")
-                return
-            discount_20 = points * 0.20
-            discount_50 = points * 0.50
-            response = CTkMessagebox(title="Redeem Points", message=f"Points: {points}\n20% Discount: {discount_20}\n50% Discount: {discount_50}", option_1="20%", option_2="50%")
-            if response.get() == "20%":
-                DBActions.redeem_points(rfid_num, discount_20)
-            elif response.get() == "50%":
-                DBActions.redeem_points(rfid_num, discount_50)
-            CTkMessagebox(title="Redeem Points", message="Points redeemed successfully!")
-            redeem_window.destroy()
+    #     def redeem_points():
+    #         rfid_num = rfid_entry.get().strip()
+    #         if not rfid_num:
+    #             CTkMessagebox(title="Redeem Points", message="RFID cannot be empty!")
+    #             return
+    #         points = DBActions.get_member_points(rfid_num)
+    #         if points is None:
+    #             CTkMessagebox(title="Redeem Points", message="Member not found!")
+    #             return
+    #         discount_20 = points * 0.20
+    #         discount_50 = points * 0.50
+    #         response = CTkMessagebox(title="Redeem Points", message=f"Points: {points}\n20% Discount: {discount_20}\n50% Discount: {discount_50}", option_1="20%", option_2="50%")
+    #         if response.get() == "20%":
+    #             DBActions.redeem_points(rfid_num, discount_20)
+    #         elif response.get() == "50%":
+    #             DBActions.redeem_points(rfid_num, discount_50)
+    #         CTkMessagebox(title="Redeem Points", message="Points redeemed successfully!")
+    #         redeem_window.destroy()
 
-        redeem_button = CTk.CTkButton(redeem_window, text="Redeem", command=redeem_points)
-        redeem_button.pack(pady=5)
+    #     redeem_button = CTk.CTkButton(redeem_window, text="Redeem", command=redeem_points)
+    #     redeem_button.pack(pady=5)

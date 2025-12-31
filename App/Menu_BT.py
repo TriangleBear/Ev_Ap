@@ -27,3 +27,21 @@ class ThemeManager: #Sauce: "Button Foreground change color during light,dark,sy
 
         for key in self.app.nav_buttons:
             self.app.nav_buttons[key].configure(text_color=text_color)
+
+    def get_disabled_bg_color(self):
+        current_mode = CTk.get_appearance_mode()
+        if current_mode == "Light":
+            return "#f0f0f0"  # Light gray for light mode
+        elif current_mode == "Dark":
+            return "#1a1a1a"  # Dark gray for dark mode
+        else:  # System mode
+            return "#f0f0f0"  # Default to light gray
+        
+    def get_disabled_text_color(self):
+        current_mode = CTk.get_appearance_mode()
+        if current_mode == "Light":
+            return "#666666"  # Darker gray for better contrast in light mode
+        elif current_mode == "Dark":
+            return "#aaaaaa"  # Lighter gray for better contrast in dark mode
+        else:  # System mode
+            return "#666666"  # Default to darker gray

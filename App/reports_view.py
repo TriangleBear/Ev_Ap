@@ -21,8 +21,8 @@ class ReportsView(CTk.CTkFrame):
         # Report types
         report_types = [
             {"title": "Attendance Report", "desc": "Generate a report of attendance for a specific event", "command": self.attendance_report},
-            {"title": "Members Summary", "desc": "Generate a summary of all members and their points", "command": self.members_summary},
-            {"title": "Points Redemption Report", "desc": "View points redemption history", "command": self.redemption_report},
+            # {"title": "Members Summary", "desc": "Generate a summary of all members and their points", "command": self.members_summary},
+            # {"title": "Points Redemption Report", "desc": "View points redemption history", "command": self.redemption_report},
             {"title": "Export Data", "desc": "Export event or member data to CSV or Excel", "command": self.export_data},
         ]
         
@@ -118,26 +118,26 @@ class ReportsView(CTk.CTkFrame):
         
         CTkMessagebox(title="Report Generated", message="Members summary report generated successfully.")
         
-    def redemption_report(self):
-        # Generate points redemption report using the points column in the Members table
-        data = DBActions.fetch_point_data('Members')
-        if not data:
-            CTkMessagebox(title="No Data", message="No member data found.")
-            return
+    # def redemption_report(self):
+    #     # Generate points redemption report using the points column in the Members table
+    #     data = DBActions.fetch_point_data('Members')
+    #     if not data:
+    #         CTkMessagebox(title="No Data", message="No member data found.")
+    #         return
         
-        df = pd.DataFrame(data)
-        df = df[['name', 'points']]  # Select relevant columns
+    #     df = pd.DataFrame(data)
+    #     df = df[['name', 'points']]  # Select relevant columns
         
-        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
-        if not file_path:
-            return
+    #     file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
+    #     if not file_path:
+    #         return
         
-        if file_path.endswith('.csv'):
-            df.to_csv(file_path, index=False)
-        elif file_path.endswith('.xlsx'):
-            df.to_excel(file_path, index=False)
+    #     if file_path.endswith('.csv'):
+    #         df.to_csv(file_path, index=False)
+    #     elif file_path.endswith('.xlsx'):
+    #         df.to_excel(file_path, index=False)
         
-        CTkMessagebox(title="Report Generated", message="Points redemption report generated successfully.")
+    #     CTkMessagebox(title="Report Generated", message="Points redemption report generated successfully.")
         
     def export_data(self):
         # Export event or member data to CSV or Excel

@@ -6,7 +6,7 @@ from icecream import ic
 class EventManager:
     def __init__(self, app):
         self.app = app
-        self.points_per_event = {}
+        # self.points_per_event = {}
 
     def create_event_button_clicked(self):
         ic("create_event_button_clicked")
@@ -36,10 +36,10 @@ class EventManager:
         event_name_label.pack(pady=5)
 
         def event_create():
-            points = 0.10
+            # points = 0.10
             try:
                 DBActions.create_event_table(event_name)
-                self.points_per_event[event_name] = points
+                # self.points_per_event[event_name] = points
                 CTkMessagebox(title="Event Creation", message="Event Created!", icon="check")
                 self.app.update_tables_dropdown()
                 event_window.destroy()

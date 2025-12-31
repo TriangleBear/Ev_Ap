@@ -134,17 +134,17 @@ class DBActions:
         return thread
 
     @staticmethod
-    def fetch_point_data(table_name):
-        try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
-                sql = f"SELECT name, points FROM {table_name}"
-                cursor.execute(sql)
-                result = cursor.fetchall()
-            return [{'name': row['name'], 'points': row['points']} for row in result]
-        except Exception as e:
-            ic(f"Error listing tables: {e}")
-            return []
+    # def fetch_point_data(table_name):
+    #     try:
+    #         with DBActions.get_db_instance().get_db_connection() as conn:
+    #             cursor = conn.cursor()
+    #             sql = f"SELECT name, points FROM {table_name}"
+    #             cursor.execute(sql)
+    #             result = cursor.fetchall()
+    #         return [{'name': row['name'], 'points': row['points']} for row in result]
+    #     except Exception as e:
+    #         ic(f"Error listing tables: {e}")
+    #         return []
 
     @staticmethod
     def attendance_member_event(table_name, rfid):
@@ -179,45 +179,45 @@ class DBActions:
             ic(f"Error listing tables: {e}")
             return None
 
-    @staticmethod
-    def add_points(rfid, points):
-        try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
-                sql = "UPDATE Members SET points = points + ? WHERE rfid = ?"
-                cursor.execute(sql, (points, rfid))
-                conn.commit()
-                ic(f"Added {points} points to RFID {rfid}")  # Debugging line to confirm points addition
-            return 0
-        except Exception as e:
-            ic(f"Error listing tables: {e}")
-            return -1
+    # @staticmethod
+    # def add_points(rfid, points):
+    #     try:
+    #         with DBActions.get_db_instance().get_db_connection() as conn:
+    #             cursor = conn.cursor()
+    #             sql = "UPDATE Members SET points = points + ? WHERE rfid = ?"
+    #             cursor.execute(sql, (points, rfid))
+    #             conn.commit()
+    #             ic(f"Added {points} points to RFID {rfid}")  # Debugging line to confirm points addition
+    #         return 0
+    #     except Exception as e:
+    #         ic(f"Error listing tables: {e}")
+    #         return -1
 
-    @staticmethod
-    def get_member_points(rfid):
-        try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
-                sql = "SELECT points FROM Members WHERE rfid = ?"
-                cursor.execute(sql, (rfid,))
-                result = cursor.fetchone()
-            return result['points'] if result else None
-        except Exception as e:
-            ic(f"Error listing tables: {e}")
-            return None
+    # @staticmethod
+    # def get_member_points(rfid):
+    #     try:
+    #         with DBActions.get_db_instance().get_db_connection() as conn:
+    #             cursor = conn.cursor()
+    #             sql = "SELECT points FROM Members WHERE rfid = ?"
+    #             cursor.execute(sql, (rfid,))
+    #             result = cursor.fetchone()
+    #         return result['points'] if result else None
+    #     except Exception as e:
+    #         ic(f"Error listing tables: {e}")
+    #         return None
 
-    @staticmethod
-    def redeem_points(rfid, points):
-        try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
-                sql = "UPDATE Members SET points = points - ? WHERE rfid = ?"
-                cursor.execute(sql, (points, rfid))
-                conn.commit()
-            return 0
-        except Exception as e:
-            ic(f"Error listing tables: {e}")
-            return -1
+    # @staticmethod
+    # def redeem_points(rfid, points):
+    #     try:
+    #         with DBActions.get_db_instance().get_db_connection() as conn:
+    #             cursor = conn.cursor()
+    #             sql = "UPDATE Members SET points = points - ? WHERE rfid = ?"
+    #             cursor.execute(sql, (points, rfid))
+    #             conn.commit()
+    #         return 0
+    #     except Exception as e:
+    #         ic(f"Error listing tables: {e}")
+    #         return -1
 
     @staticmethod
     def member_attended_event(table_name, rfid):

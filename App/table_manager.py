@@ -119,9 +119,9 @@ class TableManager:
                 except Exception as e:
                     print(f"Error showing RFID recorded message: {e}")
 
-                points = self.app.event_manager.points_per_event.get(selected_table, 0.10)
-                ic(f"Adding {points} points to RFID {rfid_num} for event {selected_table}")
-                DBActions.add_points(rfid_num, points)
+                # points = self.app.event_manager.points_per_event.get(selected_table, 0.10)
+                # ic(f"Adding {points} points to RFID {rfid_num} for event {selected_table}")
+                # DBActions.add_points(rfid_num, points)
 
         def refresh_data():
             updated_data = DBActions.fetch_table_data(selected_table)

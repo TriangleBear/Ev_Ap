@@ -44,7 +44,8 @@ class HomeView(CTk.CTkFrame):
             "Redeem Points", 
             "Process point redemptions for members", 
             "Redeem Points",
-            lambda: self.app.member_manager.redeem_points_button_clicked()
+            lambda: "disabled",
+            disabled=True
         )
         self.card4.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
         
@@ -54,7 +55,7 @@ class HomeView(CTk.CTkFrame):
         self.grid_frame.grid_rowconfigure(0, weight=1)
         self.grid_frame.grid_rowconfigure(1, weight=1)
         
-    def create_card(self, title, description, button_text, button_command):
+    def create_card(self, title, description, button_text, button_command, disabled=False):
         card = CTk.CTkFrame(self.grid_frame)
         
         title_label = CTk.CTkLabel(card, text=title, font=CTk.CTkFont(size=18, weight="bold"))
@@ -63,8 +64,15 @@ class HomeView(CTk.CTkFrame):
         desc_label = CTk.CTkLabel(card, text=description, wraplength=250)
         desc_label.pack(padx=20, pady=(0, 20), anchor="w", fill="both", expand=True)
         
-        button = CTk.CTkButton(card, text=button_text, command=button_command)
+        button = CTk.CTkButton(card, text=button_text, command=button_command, state="normal" if not disabled else "disabled")
         button.pack(padx=20, pady=(0, 20), fill="x")
+
+        if disabled:
+            disabled_bg = self.app.theme_manager.get_disabled_bg_color()
+            disabled_text = self.app.theme_manager.get_disabled_text_color()
+            card.configure(fg_color=disabled_bg)
+            title_label.configure(text_color=disabled_text)
+            desc_label.configure(text_color=disabled_text)
         
         return card
         

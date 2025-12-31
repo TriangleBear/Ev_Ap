@@ -39,8 +39,6 @@ class SettingsView(CTk.CTkFrame):
         
         self.apply_button = CTk.CTkButton(self.options_frame, text="Apply", command=self.apply_db_settings)
         self.apply_button.pack(anchor="w", padx=10, pady=20)
-        
-        self.cloud_creds_frame.pack_forget()  # Hide cloud creds frame initially
 
     def change_db_mode(self, mode):
         # Only SQLite supported now; nothing to toggle

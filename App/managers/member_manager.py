@@ -1,6 +1,6 @@
 import customtkinter as CTk
 from CTkMessagebox import CTkMessagebox
-from dblite import DBActions
+from database.dblite import DBActions
 from icecream import ic
 
 class MemberManager:

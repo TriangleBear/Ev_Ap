@@ -1,15 +1,15 @@
 from tkinter import TclError
 import customtkinter as CTk
-from dblite import DBActions, Database
+from database.dblite import DBActions, Database
 from icecream import ic
 import threading
 import time
 
-from event_manager import EventManager
-from member_manager import MemberManager
-from table_manager import TableManager
-from home_view import HomeView
-from Menu_BT import ThemeManager #Sauce: "i created a new class, check it out.Also my codes are located at Line 29, 26, 61, 335"
+from managers.event_manager import EventManager
+from managers.member_manager import MemberManager
+from managers.table_manager import TableManager
+from views.home_view import HomeView
+from theme.theme_manager import ThemeManager
 
 
 # Import other views when needed, not all at startup
@@ -216,25 +216,25 @@ class MainApp:
             
         # Import views only when needed
         if view_name == "home":
-            from home_view import HomeView
+            from views.home_view import HomeView
             self.initialized_views[view_name] = HomeView(self.content_frame, self)
         elif view_name == "events":
-            from events_view import EventsView
+            from views.events_view import EventsView
             self.initialized_views[view_name] = EventsView(self.content_frame, self)
         elif view_name == "members":
-            from members_view import MembersView
+            from views.members_view import MembersView
             self.initialized_views[view_name] = MembersView(self.content_frame, self)
         elif view_name == "reports":
-            from reports_view import ReportsView
+            from views.reports_view import ReportsView
             self.initialized_views[view_name] = ReportsView(self.content_frame, self)
         elif view_name == "settings":
-            from settings_view import SettingsView
+            from views.settings_view import SettingsView
             self.initialized_views[view_name] = SettingsView(self.content_frame, self)
         elif view_name == "help":
-            from help_view import HelpView
+            from views.help_view import HelpView
             self.initialized_views[view_name] = HelpView(self.content_frame, self)
         elif view_name == "about":
-            from about_view import AboutView
+            from views.about_view import AboutView
             self.initialized_views[view_name] = AboutView(self.content_frame, self)
             
         return self.initialized_views[view_name]

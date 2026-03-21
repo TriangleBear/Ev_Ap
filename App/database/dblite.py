@@ -1,6 +1,6 @@
 import datetime
 from icecream import ic
-from sqlite_db import SQLiteDB
+from .sqlite_db import SQLiteDB
 import threading
 import queue
 import time

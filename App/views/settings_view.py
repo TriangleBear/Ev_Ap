@@ -1,5 +1,5 @@
 import customtkinter as CTk
-from dblite import Database, DBActions
+from database.dblite import Database, DBActions
 from CTkMessagebox import CTkMessagebox
 
 class SettingsView(CTk.CTkFrame):

@@ -2,7 +2,7 @@ import customtkinter as CTk
 from CTkMessagebox import CTkMessagebox
 from tkinter import filedialog
 import pandas as pd
-from dblite import DBActions
+from database.dblite import DBActions
 
 class ReportsView(CTk.CTkFrame):
     def __init__(self, parent, app):

@@ -3,7 +3,7 @@ from CTkMessagebox import CTkMessagebox
 from tkinter import filedialog
 import pandas as pd
 import time
-from dblite import DBActions
+from database.dblite import DBActions
 from icecream import ic
 import sqlite3
 

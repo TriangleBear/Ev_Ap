@@ -1,6 +1,6 @@
 import customtkinter as CTk
 from CTkMessagebox import CTkMessagebox
-from dblite import DBActions, Database
+from database.dblite import DBActions, Database
 
 class EventsView(CTk.CTkFrame):
     def __init__(self, parent, app):

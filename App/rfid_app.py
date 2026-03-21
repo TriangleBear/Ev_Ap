@@ -128,14 +128,14 @@ class MainApp:
         self.content_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
         
         # Create application title in sidebar
-        self.app_title = CTk.CTkLabel(self.sidebar_frame, text="AHO RFID App", 
+        self.app_title = CTk.CTkLabel(self.sidebar_frame, text="Ev_Ap", 
                                      font=CTk.CTkFont(size=20, weight="bold"))
         self.app_title.pack(padx=20, pady=(20, 10))
         
         # Add database connection status label
-        self.db_status_label = CTk.CTkLabel(self.sidebar_frame, text="Initializing...", 
-                                           font=CTk.CTkFont(size=12, weight="bold"))
-        self.db_status_label.pack(side="bottom", pady=10)
+        # self.db_status_label = CTk.CTkLabel(self.sidebar_frame, text="Initializing...", 
+        #                                    font=CTk.CTkFont(size=12, weight="bold"))
+        # self.db_status_label.pack(side="bottom", pady=10)
 
     def create_nav_button(self, text, command):
         """Create a navigation button with consistent styling"""
@@ -181,24 +181,24 @@ class MainApp:
         self.nav_buttons["help"] = self.create_nav_button("Help", self.show_help_view)       
         self.nav_buttons["about"] = self.create_nav_button("About", self.show_about_view)
         
-        # Create appearance mode toggle
-        self.appearance_mode_label = CTk.CTkLabel(self.sidebar_frame, text="Appearance Mode:")
-        self.appearance_mode_label.pack(padx=20, pady=(20, 0))
+        # # Create appearance mode toggle
+        # self.appearance_mode_label = CTk.CTkLabel(self.sidebar_frame, text="Appearance Mode:")
+        # self.appearance_mode_label.pack(padx=20, pady=(20, 0))
         
-        self.appearance_mode_menu = CTk.CTkOptionMenu(
-            self.sidebar_frame, 
-            values=["Light", "Dark", "System"],
-            command=self.change_appearance_mode
-        )
-        self.appearance_mode_menu.pack(padx=20, pady=10)
-        self.appearance_mode_menu.set("System")
+        # self.appearance_mode_menu = CTk.CTkOptionMenu(
+        #     self.sidebar_frame, 
+        #     values=["Light", "Dark", "System"],
+        #     command=self.change_appearance_mode
+        # )
+        # self.appearance_mode_menu.pack(padx=20, pady=10)
+        # self.appearance_mode_menu.set("System")
         
         # Initialize only the home view
         self.init_view("home")
         self.show_home_view()
         
         # Update database status
-        self.update_db_status_label()
+        # self.update_db_status_label()
         
         # Center the window
         self.center_window(self.root)
@@ -321,5 +321,5 @@ class MainApp:
         tables = [table for table in self.tables_list if table != 'Members']
         return tables
 
-    def update_db_status_label(self):
-        self.db_status_label.configure(text="Connected to SQLite")
+    # def update_db_status_label(self):
+    #     self.db_status_label.configure(text="Connected to SQLite")

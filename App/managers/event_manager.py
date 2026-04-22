@@ -15,19 +15,46 @@ class EventManager:
             ic("User cancelled event creation")
             return
         elif response.get() == "Yes":
-            dialog = CTk.CTkInputDialog(title="Create Event Name", text="Enter the name for the new event:")
-            event_name = dialog.get_input()
-            if event_name:
-                ic(f"Creating new event '{event_name}'...")
-                self.create_event_window(event_name)
-            else:
-                ic("No event name provided. Exiting...")
-                CTkMessagebox(title="Create Event", message="No event name provided.", icon="error")
+            dialog = CTk.CTkToplevel(self.app.root)
+            dialog.title("Create Event Name")
+            dialog.geometry("400x130")
+            dialog.attributes('-topmost', False)
+            dialog.resizable(False, False)
+            self.app.center_window(dialog)
+
+            label = CTk.CTkLabel(dialog, text="Enter the name for the new event:")
+            label.pack(pady=(12, 6))
+
+            entry = CTk.CTkEntry(dialog, width=300)
+            entry.pack(pady=(0, 12))
+
+            def on_submit():
+                event_name = entry.get().strip()
+                if event_name:
+                    dialog.destroy()
+                    self.create_event_window(event_name)
+                else:
+                    CTkMessagebox(title="Create Event", message="No event name provided.", icon="error")
+
+            def on_cancel():
+                dialog.destroy()
+
+            btn_frame = CTk.CTkFrame(dialog)
+            btn_frame.pack(pady=(0,12))
+
+            submit_btn = CTk.CTkButton(btn_frame, text="Submit", command=on_submit)
+            submit_btn.pack(side="left", padx=8)
+            cancel_btn = CTk.CTkButton(btn_frame, text="Cancel", command=on_cancel)
+            cancel_btn.pack(side="left", padx=8)
+
+            dialog.transient(self.app.root)
+            dialog.grab_set()
+            self.app.root.wait_window(dialog)
 
     def create_event_window(self, event_name):
         event_window = CTk.CTkToplevel(self.app.root)
         event_window.title("Create Event")
-        event_window.geometry("400x300")
+        event_window.geometry("300x100")
         event_window.attributes('-topmost', True)
         event_window.resizable(False, False)
         self.app.center_window(event_window)

@@ -13,7 +13,9 @@ python ORG-RFID-EVENTS/App/main.py
 
 Where to start reading code
 - `App/rfid_app.py` — application bootstrap and UI flow.
-- `App/dblite.py` / `App/sqlite_db.py` — database layer and schema.
+- `App/database/dblite.py` / `App/database/sqlite_db.py` — database layer and schema.
+- `App/managers/` — event, member, and table management logic.
+- `App/views/` — UI views for each section of the app.
 
 Testing
 - Run tests under `App/TEST/` with pytest (install pytest first):

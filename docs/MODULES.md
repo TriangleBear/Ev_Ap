@@ -7,16 +7,15 @@ This file contains short summaries for the main modules in the application. Use 
   - UI bootstrap (CustomTkinter) and main layout.
   - Background initialization of the `Database`.
   - Lazy view initialization and navigation for Home, Events, Members, Reports, Settings, Help, About.
-- `App/dblite.py` — `DBActions` static helper methods for database operations and `Database` wrapper.
-  - Member registration, event table creation, attendance recording, points operations.
+- `App/database/dblite.py` — `DBActions` static helper methods for database operations and `Database` wrapper.
+  - Member registration, event table creation, attendance recording.
   - Contains `Database` which wraps `SQLiteDB` and exposes `get_db_connection` and `initialize_db`.
-- `App/sqlite_db.py` — `SQLiteDB` class that handles SQLite file, connections, and schema initialization.
-- `App/event_manager.py` — `EventManager` to create events and event windows.
-- `App/member_manager.py` — `MemberManager` for registering members and redeeming points.
-- `App/table_manager.py` — (TODO) manages table-related UI and interactions.
-- `App/home_view.py`, `App/events_view.py`, `App/members_view.py`, `App/reports_view.py`, `App/settings_view.py`, `App/help_view.py`, `App/about_view.py` — UI views for the main sections. (Populate per-file summaries.)
-- `App/Menu_BT.py` — Theme and menu utilities.
-- `App/cloud_db.py` — (Present but unused when running SQLite-only mode.)
+- `App/database/sqlite_db.py` — `SQLiteDB` class that handles SQLite file, connections, and schema initialization.
+- `App/managers/event_manager.py` — `EventManager` to create events and event windows.
+- `App/managers/member_manager.py` — `MemberManager` for registering members.
+- `App/managers/table_manager.py` — Manages table-related UI and interactions.
+- `App/theme/theme_manager.py` — Theme configuration and utilities.
+- `App/views/home_view.py`, `App/views/events_view.py`, `App/views/members_view.py`, `App/views/reports_view.py`, `App/views/settings_view.py`, `App/views/help_view.py`, `App/views/about_view.py` — UI views for the main sections.
 
 Tests
 - `App/TEST/` contains unit tests; expand to cover critical DB operations and managers.

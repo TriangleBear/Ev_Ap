@@ -1,6 +1,6 @@
 # Development Guide
 
-Welcome to the Event Attendance repository! This document will guide you through the development setup and contribution process.
+Welcome to the Ev_Ap repository! This document will guide you through the development setup and contribution process.
 
 ## Getting Started
 
@@ -16,19 +16,22 @@ Before you start developing, make sure you have the following tools installed:
 
 1. Clone the repository to your local machine:
     ```bash
-    git clone https://github.com/your-username/event-attendance.git
-    cd event-attendance
+    git clone https://github.com/TriangleBear/Ev_Ap.git
+    cd Ev_Ap
     ```
 
 2. Create a virtual environment (optional but recommended):
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    ```powershell
+    python -m venv .venv
+    # Windows (PowerShell)
+    .venv\Scripts\Activate.ps1
+    # Windows (CMD)
+    .venv\Scripts\activate.bat
     ```
 
 3. Install dependencies:
     ```bash
-    pip install -r requirements.txt
+    pip install -r ORG-RFID-EVENTS/requirements.txt
     ```
 
 ### Running the Application Locally
@@ -36,7 +39,7 @@ Before you start developing, make sure you have the following tools installed:
 To start the application locally, use the following command:
 
 ```bash
-python app.py
+python ORG-RFID-EVENTS/App/main.py
 ```
 
 ## Contributing

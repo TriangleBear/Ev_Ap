@@ -31,12 +31,12 @@
 
 3. Install the required Python libraries:
     ```bash
-    pip install -r requirements.txt
+    pip install -r ORG-RFID-EVENTS/requirements.txt
     ```
 
 4. Run the application:
     ```bash
-    python main.py
+    python ORG-RFID-EVENTS/App/main.py
     ```
 
 ## Usage

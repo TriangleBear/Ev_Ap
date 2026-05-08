@@ -4,7 +4,7 @@ import time
 
 class SQLiteDB:
     def get_db_connection(self, timeout=None):
-        db_path = 'AHO_MEMBER.db'
+        db_path = 'Ev_Ap.db'
         if not os.path.exists(db_path):
             open(db_path, 'w').close()
         
@@ -27,8 +27,7 @@ class SQLiteDB:
             student_num TEXT,
             program TEXT,
             year TEXT,
-            date_registered TEXT,
-            points REAL DEFAULT 0
+            date_registered TEXT
         )''')
         cursor.execute("PRAGMA table_info(Members)")
         columns = [column[1] for column in cursor.fetchall()]

@@ -2,9 +2,9 @@ Here's a draft for the `CONTRIBUTE.md` file to guide potential contributors on h
 
 ---
 
-# Contributing to Event Attendance
+# Contributing to Ev_Ap
 
-Thank you for your interest in contributing to **Event Attendance**! We welcome and appreciate contributions from the community. By following the guidelines below, you'll help make the project better for everyone.
+Thank you for your interest in contributing to **Ev_Ap**! We welcome and appreciate contributions from the community. By following the guidelines below, you'll help make the project better for everyone.
 
 ## How to Contribute
 
@@ -12,7 +12,7 @@ Thank you for your interest in contributing to **Event Attendance**! We welcome 
 
 Start by forking the repository on GitHub. This will create a copy of the repository under your GitHub account where you can make changes without affecting the main project.
 
-- Go to the [Event Attendance GitHub Repository](https://github.com/yourusername/event-attendance).
+- Go to the [Ev_Ap GitHub Repository](https://github.com/TriangleBear/Ev_Ap).
 - Click the **Fork** button at the top-right corner of the page.
 
 ### 2. Create a New Branch
@@ -82,6 +82,3 @@ We want to make contributing to this project a positive experience for everyone.
 
 If you have any questions about contributing, please feel free to open an issue or reach out to the maintainers. We're happy to help!
 
----
-
-Let me know if you want to adjust or expand on any section!

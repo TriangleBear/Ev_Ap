@@ -1,15 +1,15 @@
 from tkinter import TclError
 import customtkinter as CTk
-from dblite import DBActions, Database
+from database.dblite import DBActions, Database
 from icecream import ic
 import threading
 import time
 
-from event_manager import EventManager
-from member_manager import MemberManager
-from table_manager import TableManager
-from home_view import HomeView
-from Menu_BT import ThemeManager #Sauce: "i created a new class, check it out.Also my codes are located at Line 29, 26, 61, 335"
+from managers.event_manager import EventManager
+from managers.member_manager import MemberManager
+from managers.table_manager import TableManager
+from views.home_view import HomeView
+from theme.theme_manager import ThemeManager
 
 
 # Import other views when needed, not all at startup
@@ -32,68 +32,19 @@ class MainApp:
         self.loading_label = None
         self.loading_status = None
         
-        # Show database selection prompt
-        self.root.withdraw() #Sauce: "bonus code, I made the mainApp set visible false unless you click proceed button in choosing a database"
-        self.show_db_selection_prompt()
+        # Initialize directly (SQLite-only)
+        self.initialize_app()
 
     def show_db_selection_prompt(self):
-        self.db_selection_window = CTk.CTkToplevel(self.root)
-        self.db_selection_window.title("Select Database")
-        self.db_selection_window.geometry("300x150")
-        self.db_selection_window.resizable(False, False)
-        self.db_selection_window.transient(self.root)
-        self.db_selection_window.grab_set()
-        
-        CTk.CTkLabel(self.db_selection_window, text="Select Database:", font=CTk.CTkFont(size=16)).pack(pady=10)
-        
-        self.db_var = CTk.StringVar(value="SQLite")
-        db_option_menu = CTk.CTkOptionMenu(self.db_selection_window, variable=self.db_var, values=["SQLite", "Cloud MySQL"])
-        db_option_menu.pack(pady=10)
-        
-        CTk.CTkButton(self.db_selection_window, text="Proceed", command=self.on_db_selection).pack(pady=10)
-        
-        self.center_window(self.db_selection_window)
+        pass
 
     def on_db_selection(self):
-        db_choice = self.db_var.get()
-        # Destroy the selection window first
-        self.db_selection_window.destroy()
-        self.root.deiconify() #Sauce: "MainApp Frame will be visible when clicking the proceed button"
-        if db_choice == "SQLite":
-            self.initialize_app(use_cloud=False)
-        else:
-            self.show_cloud_credentials_prompt()
+        # Selection removed; initialization occurs at startup
+        return
 
-    def show_cloud_credentials_prompt(self):
-        self.cloud_credentials_window = CTk.CTkToplevel(self.root)
-        self.cloud_credentials_window.title("Cloud MySQL Credentials")
-        self.cloud_credentials_window.geometry("300x200")
-        self.cloud_credentials_window.resizable(False, False)
-        self.cloud_credentials_window.transient(self.root)
-        self.cloud_credentials_window.grab_set()
-        
-        CTk.CTkLabel(self.cloud_credentials_window, text="Cloud MySQL Credentials", font=CTk.CTkFont(size=16)).pack(pady=10)
-        
-        CTk.CTkLabel(self.cloud_credentials_window, text="Username:").pack(anchor="w", padx=20, pady=5)
-        self.cloud_user_entry = CTk.CTkEntry(self.cloud_credentials_window)
-        self.cloud_user_entry.pack(padx=20, pady=5)
-        
-        CTk.CTkLabel(self.cloud_credentials_window, text="Password:").pack(anchor="w", padx=20, pady=5)
-        self.cloud_password_entry = CTk.CTkEntry(self.cloud_credentials_window, show="*")
-        self.cloud_password_entry.pack(padx=20, pady=5)
-        
-        CTk.CTkButton(self.cloud_credentials_window, text="Proceed", command=self.on_cloud_credentials_entered).pack(pady=10)
-        
-        self.center_window(self.cloud_credentials_window)
+    # Cloud credentials UI removed: SQLite-only mode
 
-    def on_cloud_credentials_entered(self):
-        cloud_user = self.cloud_user_entry.get()
-        cloud_password = self.cloud_password_entry.get()
-        self.initialize_app(use_cloud=True, cloud_user=cloud_user, cloud_password=cloud_password)
-
-    def initialize_app(self, use_cloud, cloud_user=None, cloud_password=None):
-        if hasattr(self, 'cloud_credentials_window'):
-            self.cloud_credentials_window.destroy()
+    def initialize_app(self):
         
         # Create main layout first for better UX
         self.create_basic_layout()
@@ -112,19 +63,18 @@ class MainApp:
         self.progress_bar.set(0.1)
         self.root.update()  # Force UI update
         
-        # Initialize database in background thread
-        self.database = Database(use_cloud=use_cloud, cloud_user=cloud_user, cloud_password=cloud_password, app=self)
-        
+        # Initialize SQLite-only database in background thread
+        self.database = Database(app=self)
+
         # Start initialization thread
-        self.init_thread = threading.Thread(target=self.background_initialization, 
-                                           args=(use_cloud, cloud_user, cloud_password))
+        self.init_thread = threading.Thread(target=self.background_initialization)
         self.init_thread.daemon = True
         self.init_thread.start()
         
         # Start polling for completion
         self.root.after(100, self.check_initialization_progress)
 
-    def background_initialization(self, use_cloud, cloud_user=None, cloud_password=None):
+    def background_initialization(self):
         """Perform heavy initialization tasks in background thread"""
         try:
             # Preload only essential data
@@ -178,14 +128,14 @@ class MainApp:
         self.content_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
         
         # Create application title in sidebar
-        self.app_title = CTk.CTkLabel(self.sidebar_frame, text="AHO RFID App", 
+        self.app_title = CTk.CTkLabel(self.sidebar_frame, text="Ev_Ap", 
                                      font=CTk.CTkFont(size=20, weight="bold"))
         self.app_title.pack(padx=20, pady=(20, 10))
         
         # Add database connection status label
-        self.db_status_label = CTk.CTkLabel(self.sidebar_frame, text="Initializing...", 
-                                           font=CTk.CTkFont(size=12, weight="bold"))
-        self.db_status_label.pack(side="bottom", pady=10)
+        # self.db_status_label = CTk.CTkLabel(self.sidebar_frame, text="Initializing...", 
+        #                                    font=CTk.CTkFont(size=12, weight="bold"))
+        # self.db_status_label.pack(side="bottom", pady=10)
 
     def create_nav_button(self, text, command):
         """Create a navigation button with consistent styling"""
@@ -231,24 +181,24 @@ class MainApp:
         self.nav_buttons["help"] = self.create_nav_button("Help", self.show_help_view)       
         self.nav_buttons["about"] = self.create_nav_button("About", self.show_about_view)
         
-        # Create appearance mode toggle
-        self.appearance_mode_label = CTk.CTkLabel(self.sidebar_frame, text="Appearance Mode:")
-        self.appearance_mode_label.pack(padx=20, pady=(20, 0))
+        # # Create appearance mode toggle
+        # self.appearance_mode_label = CTk.CTkLabel(self.sidebar_frame, text="Appearance Mode:")
+        # self.appearance_mode_label.pack(padx=20, pady=(20, 0))
         
-        self.appearance_mode_menu = CTk.CTkOptionMenu(
-            self.sidebar_frame, 
-            values=["Light", "Dark", "System"],
-            command=self.change_appearance_mode
-        )
-        self.appearance_mode_menu.pack(padx=20, pady=10)
-        self.appearance_mode_menu.set("System")
+        # self.appearance_mode_menu = CTk.CTkOptionMenu(
+        #     self.sidebar_frame, 
+        #     values=["Light", "Dark", "System"],
+        #     command=self.change_appearance_mode
+        # )
+        # self.appearance_mode_menu.pack(padx=20, pady=10)
+        # self.appearance_mode_menu.set("System")
         
         # Initialize only the home view
         self.init_view("home")
         self.show_home_view()
         
         # Update database status
-        self.update_db_status_label()
+        # self.update_db_status_label()
         
         # Center the window
         self.center_window(self.root)
@@ -266,25 +216,25 @@ class MainApp:
             
         # Import views only when needed
         if view_name == "home":
-            from home_view import HomeView
+            from views.home_view import HomeView
             self.initialized_views[view_name] = HomeView(self.content_frame, self)
         elif view_name == "events":
-            from events_view import EventsView
+            from views.events_view import EventsView
             self.initialized_views[view_name] = EventsView(self.content_frame, self)
         elif view_name == "members":
-            from members_view import MembersView
+            from views.members_view import MembersView
             self.initialized_views[view_name] = MembersView(self.content_frame, self)
         elif view_name == "reports":
-            from reports_view import ReportsView
+            from views.reports_view import ReportsView
             self.initialized_views[view_name] = ReportsView(self.content_frame, self)
         elif view_name == "settings":
-            from settings_view import SettingsView
+            from views.settings_view import SettingsView
             self.initialized_views[view_name] = SettingsView(self.content_frame, self)
         elif view_name == "help":
-            from help_view import HelpView
+            from views.help_view import HelpView
             self.initialized_views[view_name] = HelpView(self.content_frame, self)
         elif view_name == "about":
-            from about_view import AboutView
+            from views.about_view import AboutView
             self.initialized_views[view_name] = AboutView(self.content_frame, self)
             
         return self.initialized_views[view_name]
@@ -371,8 +321,5 @@ class MainApp:
         tables = [table for table in self.tables_list if table != 'Members']
         return tables
 
-    def update_db_status_label(self):
-        if self.database.use_cloud:
-            self.db_status_label.configure(text="Connected to Cloud MySQL")
-        else:
-            self.db_status_label.configure(text="Connected to SQLite")
+    # def update_db_status_label(self):
+    #     self.db_status_label.configure(text="Connected to SQLite")

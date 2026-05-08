@@ -6,7 +6,9 @@ customtkinter==5.2.2
 darkdetect==0.8.0
 executing==2.0.1
 icecream==2.1.3
+numpy==2.4.4
 packaging==24.1
 pillow==12.2.0
 Pygments==2.20.0
 six==1.16.0
+tzdata==2026.1

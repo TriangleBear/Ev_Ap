@@ -16,7 +16,7 @@ class HelpView(CTk.CTkFrame):
         - Register new members
         - Create new events
         - Record attendance using RFID
-        - Redeem points for members
+        - Redeem points for members DISABLED
         - Export event data to CSV or Excel
 
         For any assistance, please contact support.

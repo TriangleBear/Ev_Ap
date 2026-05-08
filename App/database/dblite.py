@@ -1,7 +1,6 @@
 import datetime
 from icecream import ic
-from sqlite_db import SQLiteDB
-from cloud_db import CloudDB
+from .sqlite_db import SQLiteDB
 import threading
 import queue
 import time
@@ -58,19 +57,9 @@ class DBActions:
             db_instance = DBActions.get_db_instance()
             with db_instance.get_db_connection() as conn:
                 cursor = conn.cursor()
-                 
-                # Different query based on database type
-                if db_instance.use_cloud:
-                    cursor.execute("SHOW TABLES")
-                    tables = cursor.fetchall()
-                    # MySQL returns tuples with the table name as the first element
-                    return [table[0] for table in tables if table[0] != 'Members']
-                else:
-                    # SQLite query
-                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-                    tables = cursor.fetchall()
-                    # Filter out 'Members' table
-                    return [table[0] for table in tables if table[0] not in ['Members', 'sqlite_sequence']]
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = cursor.fetchall()
+                return [table[0] for table in tables if table[0] not in ['Members', 'sqlite_sequence']]
         except Exception as e:
             ic(f"Error listing tables: {e}")
             return []
@@ -84,28 +73,15 @@ class DBActions:
                 cursor = conn.cursor()
                 
                 
-                # Different SQL based on database type
-                if db_instance.use_cloud:
-                    # MySQL syntax
-                    sql = f"""CREATE TABLE IF NOT EXISTS `{table_name}` (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        rfid TEXT NOT NULL,
-                        memberid TEXT NOT NULL,
-                        student_num TEXT NOT NULL,
-                        name TEXT NOT NULL,
-                        attendance_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )"""
-                else:
-                    # SQLite syntax
-                    sql = f"""CREATE TABLE IF NOT EXISTS `{table_name}` (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        rfid TEXT NOT NULL,
-                        memberid TEXT NOT NULL,
-                        student_num TEXT NOT NULL,
-                        name TEXT NOT NULL,
-                        attendance_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (rfid) REFERENCES Members(rfid)
-                    )"""
+                sql = f"""CREATE TABLE IF NOT EXISTS `{table_name}` (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    rfid TEXT NOT NULL,
+                    memberid TEXT NOT NULL,
+                    student_num TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    attendance_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (rfid) REFERENCES Members(rfid)
+                )"""
                 cursor.execute(sql)
                 conn.commit()
             return 0
@@ -158,17 +134,17 @@ class DBActions:
         return thread
 
     @staticmethod
-    def fetch_point_data(table_name):
-        try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
-                sql = f"SELECT name, points FROM {table_name}"
-                cursor.execute(sql)
-                result = cursor.fetchall()
-            return [{'name': row['name'], 'points': row['points']} for row in result]
-        except Exception as e:
-            ic(f"Error listing tables: {e}")
-            return []
+    # def fetch_point_data(table_name):
+    #     try:
+    #         with DBActions.get_db_instance().get_db_connection() as conn:
+    #             cursor = conn.cursor()
+    #             sql = f"SELECT name, points FROM {table_name}"
+    #             cursor.execute(sql)
+    #             result = cursor.fetchall()
+    #         return [{'name': row['name'], 'points': row['points']} for row in result]
+    #     except Exception as e:
+    #         ic(f"Error listing tables: {e}")
+    #         return []
 
     @staticmethod
     def attendance_member_event(table_name, rfid):
@@ -203,45 +179,45 @@ class DBActions:
             ic(f"Error listing tables: {e}")
             return None
 
-    @staticmethod
-    def add_points(rfid, points):
-        try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
-                sql = "UPDATE Members SET points = points + ? WHERE rfid = ?"
-                cursor.execute(sql, (points, rfid))
-                conn.commit()
-                ic(f"Added {points} points to RFID {rfid}")  # Debugging line to confirm points addition
-            return 0
-        except Exception as e:
-            ic(f"Error listing tables: {e}")
-            return -1
+    # @staticmethod
+    # def add_points(rfid, points):
+    #     try:
+    #         with DBActions.get_db_instance().get_db_connection() as conn:
+    #             cursor = conn.cursor()
+    #             sql = "UPDATE Members SET points = points + ? WHERE rfid = ?"
+    #             cursor.execute(sql, (points, rfid))
+    #             conn.commit()
+    #             ic(f"Added {points} points to RFID {rfid}")  # Debugging line to confirm points addition
+    #         return 0
+    #     except Exception as e:
+    #         ic(f"Error listing tables: {e}")
+    #         return -1
 
-    @staticmethod
-    def get_member_points(rfid):
-        try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
-                sql = "SELECT points FROM Members WHERE rfid = ?"
-                cursor.execute(sql, (rfid,))
-                result = cursor.fetchone()
-            return result['points'] if result else None
-        except Exception as e:
-            ic(f"Error listing tables: {e}")
-            return None
+    # @staticmethod
+    # def get_member_points(rfid):
+    #     try:
+    #         with DBActions.get_db_instance().get_db_connection() as conn:
+    #             cursor = conn.cursor()
+    #             sql = "SELECT points FROM Members WHERE rfid = ?"
+    #             cursor.execute(sql, (rfid,))
+    #             result = cursor.fetchone()
+    #         return result['points'] if result else None
+    #     except Exception as e:
+    #         ic(f"Error listing tables: {e}")
+    #         return None
 
-    @staticmethod
-    def redeem_points(rfid, points):
-        try:
-            with DBActions.get_db_instance().get_db_connection() as conn:
-                cursor = conn.cursor()
-                sql = "UPDATE Members SET points = points - ? WHERE rfid = ?"
-                cursor.execute(sql, (points, rfid))
-                conn.commit()
-            return 0
-        except Exception as e:
-            ic(f"Error listing tables: {e}")
-            return -1
+    # @staticmethod
+    # def redeem_points(rfid, points):
+    #     try:
+    #         with DBActions.get_db_instance().get_db_connection() as conn:
+    #             cursor = conn.cursor()
+    #             sql = "UPDATE Members SET points = points - ? WHERE rfid = ?"
+    #             cursor.execute(sql, (points, rfid))
+    #             conn.commit()
+    #         return 0
+    #     except Exception as e:
+    #         ic(f"Error listing tables: {e}")
+    #         return -1
 
     @staticmethod
     def member_attended_event(table_name, rfid):
@@ -258,19 +234,16 @@ class DBActions:
 
 
 class Database:
-    def __init__(self, use_cloud=False, cloud_user=None, cloud_password=None, app=None):
-        self.use_cloud = use_cloud
-        self.cloud_user = cloud_user
-        self.cloud_password = cloud_password
+    def __init__(self, app=None):
         self.app = app
-        self.db = CloudDB(cloud_user, cloud_password, app) if use_cloud else SQLiteDB()
+        self.db = SQLiteDB()
         self.initialization_complete = False
-        
+
         # Set this instance as the current one
         DBActions.set_db_instance(self)
 
     def get_db_connection(self, timeout=None):
-        if timeout is not None and self.use_cloud:
+        if timeout is not None:
             return self.db.get_db_connection(timeout)
         return self.db.get_db_connection()
 
@@ -291,11 +264,7 @@ class Database:
 
     def db_exists(self):
         return self.db.db_exists()
-
-    def backup_cloud_to_sqlite(self):
-        if self.use_cloud:
-            sqlite_db = SQLiteDB()
-            self.db.backup_cloud_to_sqlite(sqlite_db)
+    # No cloud backup functionality needed for SQLite-only setup
 
 # Don't initialize database at module import time
 db = None

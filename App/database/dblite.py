@@ -7,9 +7,10 @@ import threading
 import queue
 import time
 
+# Global variable to store the current database instance
 current_db_instance = None
+# Thread-safe queue for database operations
 db_operation_queue = queue.Queue()
-
 
 class DBActions:
     @staticmethod

@@ -10,7 +10,7 @@ class EventManager:
 
     def create_event_button_clicked(self):
         ic("create_event_button_clicked")
-        response = CTkMessagebox(title="Create Event", message="Are you sure you want to create a new event?", icon="question", option_1="Yes", option_2="No")
+        response = CTkMessagebox(title="Create Event", message="Are you sure you want to create a new event?", option_1="Yes", option_2="No")
         if response.get() == "No":
             ic("User cancelled event creation")
             return
@@ -34,8 +34,8 @@ class EventManager:
                     dialog.destroy()
                     self.create_event_window(event_name)
                 else:
-                    CTkMessagebox(title="Create Event", message="No event name provided.", icon="error")
-
+                    CTkMessagebox(title="Create Event", message="No event name provided.")
+ 
             def on_cancel():
                 dialog.destroy()
 
@@ -67,11 +67,11 @@ class EventManager:
             try:
                 DBActions.create_event_table(event_name)
                 # self.points_per_event[event_name] = points
-                CTkMessagebox(title="Event Creation", message="Event Created!", icon="check")
+                CTkMessagebox(title="Event Creation", message="Event Created!")
                 self.app.update_tables_dropdown()
                 event_window.destroy()
             except Exception as e:
-                CTkMessagebox(title="Event Creation Error", message=f"Error creating event: {str(e)}", icon="error")
+                CTkMessagebox(title="Event Creation Error", message=f"Error creating event: {str(e)}")
 
         submit_button = CTk.CTkButton(event_window, text="Submit", command=event_create)
         submit_button.pack(pady=5)

@@ -132,10 +132,10 @@ class MainApp:
                                      font=CTk.CTkFont(size=20, weight="bold"))
         self.app_title.pack(padx=20, pady=(20, 10))
         
-        # Add database connection status label
-        # self.db_status_label = CTk.CTkLabel(self.sidebar_frame, text="Initializing...", 
-        #                                    font=CTk.CTkFont(size=12, weight="bold"))
-        # self.db_status_label.pack(side="bottom", pady=10)
+        # Database connection status label
+        self.db_status_label = CTk.CTkLabel(self.sidebar_frame, text="Initializing...",
+                                           font=CTk.CTkFont(size=12, weight="bold"))
+        self.db_status_label.pack(side="bottom", pady=10)
 
     def create_nav_button(self, text, command):
         """Create a navigation button with consistent styling"""
@@ -321,5 +321,9 @@ class MainApp:
         tables = [table for table in self.tables_list if table != 'Members']
         return tables
 
-    # def update_db_status_label(self):
-    #     self.db_status_label.configure(text="Connected to SQLite")
+    def update_db_status_label(self):
+        mode = self.database.db_mode
+        if mode == 'gsheet':
+            self.db_status_label.configure(text="Connected to Google Sheets")
+        else:
+            self.db_status_label.configure(text="Connected to SQLite")

@@ -1,81 +1,79 @@
 # Ev_Ap
 
-**Ev_Ap or Event Attendance** is an application designed for managing event attendance. It allows users to register members, track attendance at events, and manage event-related data efficiently.
+**Ev_Ap (Event Attendance)** is a desktop application for managing event attendance via RFID scanning. It supports a **dual-backend** architecture — local **SQLite** or cloud **Google Sheets** via a Google Apps Script API.
 
 ## Features
 
-- **Member Registration:** Register members with their Unique ID Num, ID, name, program, and year.
-- **Event Management:** Create new events and track member attendance for each event.
-- **Attendance Tracking:** Scan or Type Unique ID Num to mark attendance for members at events.
-- **Data Export:** Export attendance data to CSV or Excel for further analysis.
+- **Member Registration:** Register members with RFID, ID, name, student number, program, and year.
+- **Event Management:** Create events — each event gets its own Google Sheet file (in GS mode) or a SQLite table (in local mode).
+- **Attendance Tracking:** Scan RFID cards to mark attendance with 15-second dedup protection.
+- **Background Scanning:** RFID scans run in a background thread so the UI stays responsive with a loading indicator.
+- **Dual Database Backend:** Switch between local SQLite and Google Sheets in Settings.
+- **Data Export:** Export attendance data to CSV or Excel.
 
 ## Requirements
 
-- Python 3.x
-- SQLite (automatically handled by the application)
-- CustomTkinter (for the UI)
-- IceCream (for debugging)
-- pandas (for exporting data)
+- Python 3.8+
+- CustomTkinter (UI)
+- IceCream (debugging)
+- pandas (export)
+- requests (Google Sheets API)
 
 ## Installation
 
-1. Clone this repository:
-    ```bash
-    git clone https://github.com/TriangleBear/Ev_Ap
-    ```
-
-2. Navigate to the project directory:
-    ```bash
-    cd Ev_Ap
-    ```
-
-3. Install the required Python libraries:
-    ```bash
-    pip install -r ORG-RFID-EVENTS/requirements.txt
-    ```
-
-4. Run the application:
-    ```bash
-    python ORG-RFID-EVENTS/App/main.py
-    ```
+```bash
+git clone https://github.com/TriangleBear/Ev_Ap
+cd Ev_Ap
+pip install -r ORG-RFID-EVENTS/requirements.txt
+python ORG-RFID-EVENTS/App/main.py
+```
 
 ## Usage
 
-### Registering a Member
+### Local Mode (SQLite — default)
+Works out of the box with no setup. All data stored locally in `Ev_Ap.db`.
 
-1. Open the "Register Member" window from the main menu.
-2. Fill in the member's details (Unique ID Num, name, student number, program, year).
-3. Click the "Submit" button to register the member.
+### Google Sheets Mode
+1. Open the Google Sheet you want to use → Extensions → Apps Script → paste `App/database/gsheet_api.gs`.
+2. Run the **Ev_Ap → Configure Spreadsheet** menu item to set your sheet.
+3. Deploy → New deployment → Web App (Execute as: Me, Access: Anyone).
+4. Copy the deployment URL.
+5. In Ev_Ap → Settings → Database → paste the URL, switch to **Google Sheets**, click Apply.
+
+Each event creates a separate Google Sheet file (`Ev_Ap - <event_name>`) in your Drive.
+
+### Registering a Member
+Navigate to Members → Register New Member → fill in details → Submit.
 
 ### Creating an Event
-
-1. Open the "Create Event" window.
-2. Enter a name for the new event.
-3. Click "Submit" to create the event and start tracking attendance.
+Navigate to Events → Create New Event → enter name → Submit.
 
 ### Marking Attendance
-
-1. Select an event from the "Select a table" dropdown menu.
-2. Scan or Type the Unique ID Num of a registered member to mark their attendance at the event.
+Open an event → scan RFID card. The scan runs in the background with a loading spinner.
 
 ### Exporting Data
+Open an event → click Export → choose CSV or Excel.
 
-1. After viewing the event's attendance data, click "Export" to save the data as a CSV or Excel file.
+## Project Structure
 
-## Screenshots
-
-![Event Attendance Screenshot](Screenshots/main.png)
-
-## Contributing
-
-We welcome contributions! If you would like to help improve the Event Attendance app, follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Make your changes.
-4. Test your changes thoroughly.
-5. Submit a pull request describing your changes.
+```
+ORG-RFID-EVENTS/App/
+├── main.py              # Entrypoint
+├── rfid_app.py          # MainApp — wires DB, managers, views
+├── database/
+│   ├── dblite.py        # DBActions (static facade) + Database wrapper (dual-backend)
+│   ├── sqlite_db.py     # Local SQLite connection / schema
+│   ├── sheet_db.py      # Google Sheets API client (HTTP → Google Apps Script)
+│   ├── config.py        # ev_ap_config.json read/write
+│   └── gsheet_api.gs    # Google Apps Script source — deploy as Web App
+├── managers/
+│   ├── event_manager.py # Event creation flow
+│   ├── member_manager.py # Member registration flow
+│   └── table_manager.py  # Event table UI, threaded RFID scan, export
+├── views/               # Lazy-loaded CustomTkinter views (7 views)
+└── TEST/                # pytest tests
+```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).

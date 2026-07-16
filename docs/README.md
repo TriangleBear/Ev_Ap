@@ -1,31 +1,28 @@
-# RFID App — Documentation
+# Ev_Ap — Documentation
 
-This repository contains a desktop attendance application (RFID App) built with CustomTkinter and SQLite.
+Desktop attendance application with **dual-backend** database: local **SQLite** or cloud **Google Sheets** via a Google Apps Script Web API.
 
-Purpose
+## Purpose
+
 - Track event attendance using RFID tags.
-- Manage members and points, create events, and generate reports.
+- Manage members, create events, and generate reports.
+- Switch between local (SQLite) and cloud (Google Sheets) database backends from Settings.
 
-Contents
-- `App/` — application source code and UI views.
-- `TEST/` — unit tests.
-- `docs/` — this documentation folder.
+## Contents
 
-Quick start
-1. Create and activate a Python virtual environment.
-2. Install dependencies:
+- `../App/` — application source code and UI views.
+- `../App/database/` — database layer: `dblite.py` (facade), `sqlite_db.py` (local), `sheet_db.py` (Google Sheets), `config.py`, `gsheet_api.gs` (deployable script).
+- `../App/managers/` — event, member, and table management logic.
+- `../App/views/` — CustomTkinter UI views (lazy-loaded).
+- `../App/TEST/` — unit tests.
+- `./MODULES.md` — module index and summaries.
+- `./USAGE.md` — setup and development notes.
+
+## Quick Start
 
 ```bash
 pip install -r ORG-RFID-EVENTS/requirements.txt
-```
-
-3. Run the application (from workspace root):
-
-```bash
 python ORG-RFID-EVENTS/App/main.py
 ```
 
-Next steps
-- Expand per-module documentation in `docs/MODULES.md`.
-- Add automated doc generation (Sphinx or MkDocs) if desired.
-- Improve docstrings in source modules.
+See `USAGE.md` for Google Sheets setup instructions.

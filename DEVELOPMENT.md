@@ -1,87 +1,88 @@
 # Development Guide
 
-Welcome to the Ev_Ap repository! This document will guide you through the development setup and contribution process.
-
 ## Getting Started
 
 ### Prerequisites
 
-Before you start developing, make sure you have the following tools installed:
-
-- Python 3.x (Recommended version: 3.8+)
+- Python 3.8+
 - Git
-- A code editor like Visual Studio Code, PyCharm, etc.
+- VS Code, PyCharm, or similar
 
-### Setting Up the Development Environment
-
-1. Clone the repository to your local machine:
-    ```bash
-    git clone https://github.com/TriangleBear/Ev_Ap.git
-    cd Ev_Ap
-    ```
-
-2. Create a virtual environment (optional but recommended):
-    ```powershell
-    python -m venv .venv
-    # Windows (PowerShell)
-    .venv\Scripts\Activate.ps1
-    # Windows (CMD)
-    .venv\Scripts\activate.bat
-    ```
-
-3. Install dependencies:
-    ```bash
-    pip install -r ORG-RFID-EVENTS/requirements.txt
-    ```
-
-### Running the Application Locally
-
-To start the application locally, use the following command:
+### Setup
 
 ```bash
+git clone https://github.com/TriangleBear/Ev_Ap.git
+cd Ev_Ap
+python -m venv .venv
+.venv\Scripts\Activate
+pip install -r ORG-RFID-EVENTS/requirements.txt
 python ORG-RFID-EVENTS/App/main.py
 ```
 
-## Contributing
+## Architecture Overview
 
-If you'd like to contribute, please follow these steps:
+### Dual-Backend Database
 
-1. Fork the repository and clone it to your local machine.
-2. Create a new branch for your feature or bug fix:
-    ```bash
-    git checkout -b feature/your-feature-name
-    ```
-3. Make your changes, ensuring that your code is well-documented and follows the style guide.
-4. Commit your changes with a clear and concise message:
-    ```bash
-    git commit -m "Add feature: your-feature-name"
-    ```
-5. Push your changes to your fork:
-    ```bash
-    git push origin feature/your-feature-name
-    ```
-6. Open a pull request against the `main` branch of this repository.
+The app supports two database backends, switchable from Settings:
 
-Please ensure that your code passes all tests and adheres to the project's coding standards.
+1. **SQLite** (default) — local file `Ev_Ap.db`, no setup required.
+2. **Google Sheets** — via a Google Apps Script Web API.
 
-## Running Tests
+The routing happens in `App/database/dblite.py`:
+- `DBActions` is a static facade. Each method checks `db_mode` from `ev_ap_config.json`.
+- If `"sqlite"`, it uses `SQLiteDB` directly.
+- If `"gsheet"`, it delegates to `SheetDB` which makes HTTP requests to the deployed script.
 
-To run the test suite, use the following command:
+### Adding a New Database Operation
+
+1. Add the method to `SheetDB` in `sheet_db.py` (GS API call).
+2. Add the corresponding action to `gsheet_api.gs` (server-side logic).
+3. Add the method to `DBActions` in `dblite.py` with the `if db_mode == 'gsheet'` branch.
+4. For SQLite, the existing raw-SQL branch works.
+
+### UI Threading
+
+RFID scans run in a background thread (`threading.Thread`) to keep the UI responsive:
+- `table_manager.py::rfid_scan_event` starts a daemon thread.
+- The thread calls `DBActions.scan_attendance()` (batched single API call in GS mode).
+- UI updates happen via `window.after(0, callback)`.
+
+## Testing
 
 ```bash
-pytest
+# From App directory
+cd ORG-RFID-EVENTS/App
+pytest TEST/
+
+# Or from root
+pytest ORG-RFID-EVENTS/App/TEST/
 ```
 
-Ensure that all tests pass before submitting your pull request.
+Tests use `tmp_path` + `monkeypatch.chdir` for isolated DB files.
+
+## Google Apps Script Development
+
+1. Edit `App/database/gsheet_api.gs`.
+2. Open your Google Sheet → Extensions → Apps Script → paste updated code.
+3. Deploy → Manage deployments → redeploy.
+4. Copy new deployment URL if it changed.
+
+### Testing the API locally
+
+```python
+from database.sheet_db import SheetDB
+db = SheetDB(api_url='https://script.google.com/.../exec')
+config = db.get_config()
+print(config)
+```
 
 ## Code Style
 
-We follow the [PEP 8](https://peps.python.org/pep-0008/) style guide for Python code. Please ensure your code adheres to it.
+- PEP 8.
+- IceCream (`ic()`) for debug output.
+- No docstrings required for internal methods (keep code concise).
 
-## License
+## Pull Requests
 
-By contributing to this project, you agree that your contributions will be licensed under the project's license (see `LICENSE`).
-
-## Need Help?
-
-If you need help or have any questions, feel free to reach out by opening an issue or asking for assistance in the discussions.
+1. Fork → branch → commit → push → PR.
+2. Ensure existing tests still pass.

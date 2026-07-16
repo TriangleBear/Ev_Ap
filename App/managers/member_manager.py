@@ -49,15 +49,22 @@ class MemberManager:
             print(f"Program: {program}")
             print(f"Year: {year}")
 
-            if DBActions.member_exists(rfid_num):
-                ic("Member already exists!")
-                CTkMessagebox(title="Member Registration", message="Member already exists!")
-                register_window.after(300, register_window.destroy)
-            else:
-                ic("Registering new member...")
-                DBActions.member_register(rfid_num, member_id, member_name, student_num, program, year)
-                CTkMessagebox(title="Member Registration", message="Member Registered!")
-                register_window.after(300, register_window.destroy)
+            try:
+                if DBActions.member_exists(rfid_num):
+                    ic("Member already exists!")
+                    CTkMessagebox(title="Member Registration", message="Member already exists!")
+                    register_window.after(300, register_window.destroy)
+                else:
+                    ic("Registering new member...")
+                    result = DBActions.member_register(rfid_num, member_id, member_name, student_num, program, year)
+                    if result == 0:
+                        CTkMessagebox(title="Member Registration", message="Member Registered!")
+                        register_window.after(300, register_window.destroy)
+                    else:
+                        CTkMessagebox(title="Member Registration", message="Failed to register member. Check the database connection.")
+            except Exception as e:
+                ic(f"Registration error: {e}")
+                CTkMessagebox(title="Member Registration", message=f"Error: {str(e)}")
 
         submit_button = CTk.CTkButton(register_window, text="Submit", command=member_register)
         submit_button.pack(pady=5)

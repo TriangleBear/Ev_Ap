@@ -1,36 +1,57 @@
 # Module Index and Summaries
 
-This file contains short summaries for the main modules in the application. Use this as a starting point for a fuller API reference.
+## Entry Point
 
-- `App/main.py` — Entry point that creates and runs the `MainApp`.
-- `App/rfid_app.py` — Implements `MainApp`.
-  - UI bootstrap (CustomTkinter) and main layout.
-  - Background initialization of the `Database`.
-  - Lazy view initialization and navigation for Home, Events, Members, Reports, Settings, Help, About.
-- `App/database/dblite.py` — `DBActions` static helper methods for database operations and `Database` wrapper.
-  - Member registration, event table creation, attendance recording.
-  - Contains `Database` which wraps `SQLiteDB` and exposes `get_db_connection` and `initialize_db`.
-- `App/database/sqlite_db.py` — `SQLiteDB` class that handles SQLite file, connections, and schema initialization.
-- `App/managers/event_manager.py` — `EventManager` to create events and event windows.
-- `App/managers/member_manager.py` — `MemberManager` for registering members.
-- `App/managers/table_manager.py` — Manages table-related UI and interactions.
-- `App/theme/theme_manager.py` — Theme configuration and utilities.
-- `App/views/home_view.py`, `App/views/events_view.py`, `App/views/members_view.py`, `App/views/reports_view.py`, `App/views/settings_view.py`, `App/views/help_view.py`, `App/views/about_view.py` — UI views for the main sections.
+- **`App/main.py`** — Creates and runs `MainApp`.
 
-Tests
-- `App/TEST/` contains unit tests; expand to cover critical DB operations and managers.
+## Core
 
-How to contribute module docs
-1. Open the target module (e.g. `App/events_view.py`).
-2. Add/complete the module docstring describing responsibilities and public API (classes/functions).
-3. Add a short section here summarizing the public classes and important methods.
+- **`App/rfid_app.py`** — `MainApp` class. UI bootstrap (CustomTkinter), background DB initialization, lazy view loading, navigation.
 
-Example entry (add to this file):
+## Database Layer
 
-```
-App/events_view.py
-- `EventsView` — Displays event listings and controls for marking attendance.
-- Public methods:
-  - `refresh()` — reloads event data from DB.
-  - `mark_attendance(rfid)` — record attendance for an RFID string.
-```
+- **`App/database/dblite.py`**
+  - `DBActions` — static facade. Each method checks `db_mode` and routes to either `SQLiteDB` or `SheetDB`.
+  - `Database` — wrapper that holds either backend, provides `initialize_db()`, `get_db_connection()`, `switch_mode()`.
+  - Key methods: `member_register`, `member_exists`, `create_event_table`, `attendance_member_event`, `scan_attendance` (batched), `fetch_table_data`, `delete_event_table`.
+
+- **`App/database/sqlite_db.py`**
+  - `SQLiteDB` — raw SQLite connections, schema init (`Members` table), `Ev_Ap.db`.
+
+- **`App/database/sheet_db.py`**
+  - `SheetDB` — HTTP client for Google Apps Script Web API.
+  - All methods mirror `DBActions` but talk to the GS API via `requests`.
+  - Batched `scan_attendance()` reduces 3 round-trips to 1.
+
+- **`App/database/config.py`**
+  - Reads/writes `ev_ap_config.json`.
+  - Fields: `db_mode` ("sqlite" | "gsheet"), `gsheet_api_url`.
+
+- **`App/database/gsheet_api.gs`**
+  - Google Apps Script source. Deploy as Web App.
+  - Handles: members CRUD, event spreadsheet creation, attendance recording.
+  - Each event creates a separate Google Sheet file in Drive.
+
+## Managers
+
+- **`App/managers/event_manager.py`** — `EventManager`: create event dialog and submission.
+- **`App/managers/member_manager.py`** — `MemberManager`: member registration with RFID cache (15s dedup).
+- **`App/managers/table_manager.py`** — `TableManager`: event table window, threaded RFID scan with loading spinner, search/filter, export.
+
+## Views (lazy-loaded)
+
+- `App/views/home_view.py` — Dashboard.
+- `App/views/events_view.py` — Event list, create/delete.
+- `App/views/members_view.py` — Member list.
+- `App/views/reports_view.py` — Attendance reports, export.
+- `App/views/settings_view.py` — Appearance mode, database mode toggle, GS API URL config, test connection, set spreadsheet.
+- `App/views/help_view.py` — Help page.
+- `App/views/about_view.py` — About page.
+
+## Theme
+
+- **`App/theme/theme_manager.py`** — Theme configuration and utilities.
+
+## Tests
+
+- **`App/TEST/`** — pytest unit tests for DB operations and managers.

@@ -54,6 +54,21 @@ Open an event → scan RFID card. The scan runs in the background with a loading
 ### Exporting Data
 Open an event → click Export → choose CSV or Excel.
 
+## CI/CD Pipeline
+
+The project uses **GitHub Actions** for continuous integration and delivery. On every push/merge to `main`, the pipeline automatically:
+
+1. **Runs tests** — if any test fails, a GitHub Issue is created with the failure details and the build is aborted.
+2. **Determines the new version** — parses the merged branch name and bumps the version accordingly:
+   - `major/*` — bumps major (`v3.3.1` → `v4.0.0`)
+   - `feature/*` or `feat/*` — bumps minor (`v3.3.1` → `v3.4.0`)
+   - `dev/*`, `fix/*`, `patch/*`, or anything else — bumps patch (`v3.3.1` → `v3.3.2`)
+3. **Updates the version** in `App/views/about_view.py` and commits it.
+4. **Builds a Windows `.exe`** with PyInstaller.
+5. **Creates a git tag** and a **GitHub Release** with the `.exe` attached and release notes auto-generated from commits since the last tag.
+
+> **Note:** Branch names **must** follow the convention above for proper version bumping. The merged source branch is extracted from the merge commit message.
+
 ## Project Structure
 
 ```

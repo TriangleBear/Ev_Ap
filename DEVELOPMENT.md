@@ -60,6 +60,34 @@ pytest ORG-RFID-EVENTS/App/TEST/
 
 Tests use `tmp_path` + `monkeypatch.chdir` for isolated DB files.
 
+## CI/CD Pipeline
+
+The repository uses **GitHub Actions** (`.github/workflows/build-release.yml`) for automated builds and releases.
+
+### Workflow trigger
+
+- **Event:** push/merge to `main`
+- **Runner:** `windows-latest` (builds native Windows `.exe`)
+
+### What happens
+
+1. **Tests** run via pytest. If they fail, a GitHub Issue is auto-created with JUnit output and the pipeline stops.
+2. **Version bump** is determined from the merged branch name:
+   - `major/*` → major bump
+   - `feature/*` or `feat/*` → minor bump
+   - `dev/*`, `fix/*`, `patch/*` → patch bump
+3. **PyInstaller** builds `Attendance_App_<version>.exe`.
+4. **About view** is updated and committed.
+5. **Git tag** and **GitHub Release** are created with the `.exe` asset and auto-generated release notes.
+
+### Helper script
+
+`scripts/ci_build.py` handles version parsing, about_view.py updates, and release note generation. It is called by the workflow but can also be run manually for testing:
+
+```bash
+python scripts/ci_build.py "Merge pull request #123 from user/feature/my-feature"
+```
+
 ## Google Apps Script Development
 
 1. Edit `App/database/gsheet_api.gs`.

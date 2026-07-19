@@ -198,7 +198,7 @@ class MainApp:
         self.show_home_view()
         
         # Update database status
-        # self.update_db_status_label()
+        self.update_db_status_label()
         
         # Center the window
         self.center_window(self.root)

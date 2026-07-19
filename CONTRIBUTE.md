@@ -19,6 +19,16 @@ Start by forking the repository on GitHub. This will create a copy of the reposi
 
 Before making any changes, create a new branch for your feature or bug fix. This helps keep the main branch clean and ensures that your changes can be reviewed properly.
 
+**Branch naming must follow these conventions** — the CI/CD pipeline uses the branch name to determine version bumps:
+
+| Branch pattern | Purpose | Version bump |
+|---|---|---|
+| `feature/*` or `feat/*` | New features | Minor (`v3.3.1` → `v3.4.0`) |
+| `fix/*` | Bug fixes | Patch (`v3.3.1` → `v3.3.2`) |
+| `patch/*` | Small patches | Patch |
+| `dev/*` | General development | Patch |
+| `major/*` | Breaking changes | Major (`v3.3.1` → `v4.0.0`) |
+
 ```bash
 git checkout -b feature/your-feature-name
 ```
@@ -59,14 +69,23 @@ Now that your changes are pushed to GitHub, open a pull request (PR) to the `mai
 - Click on the **Pull Request** tab.
 - Click **New Pull Request**, select your branch, and provide a detailed description of your changes.
 
-### 8. Review and Feedback
+### 8. CI/CD Pipeline
+
+When your PR is merged to `main`, GitHub Actions automatically:
+
+- Runs tests — if they fail, an issue is created and the build stops.
+- Bumps the version based on your branch name (see table above).
+- Builds a Windows `.exe` with PyInstaller.
+- Creates a git tag and GitHub Release with the `.exe` asset and auto-generated release notes.
+
+### 9. Review and Feedback
 
 Once the pull request is submitted, the project maintainers will review it. You might be asked to make adjustments before it is merged.
 
 - Respond to any comments or requests for changes.
 - Keep the pull request up to date if necessary (for example, if there are new changes to the `main` branch).
 
-### 9. Celebrate!
+### 10. Celebrate!
 
 Once your pull request is merged, celebrate your contribution! You’ve made the project better for everyone.
 

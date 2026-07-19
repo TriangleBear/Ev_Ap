@@ -58,8 +58,8 @@ def generate_spec(version: str, output_dir: str = "App/build") -> str:
     content = f"""# -*- mode: python ; coding: utf-8 -*-
 
 a = Analysis(
-    ['main.py'],
-    pathex=[],
+    ['../main.py'],
+    pathex=['..'],
     binaries=[],
     datas=[],
     hiddenimports=[],

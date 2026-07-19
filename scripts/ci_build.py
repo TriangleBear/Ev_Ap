@@ -1,5 +1,6 @@
-"""CI build helper — version detection, bumping, and about_view.py update."""
+"""CI build helper — version detection, bumping, about_view.py update, spec generation."""
 
+import os
 import re
 import subprocess
 import sys
@@ -48,6 +49,60 @@ def update_about_view(version: str) -> None:
         f.write(content)
 
 
+def generate_spec(version: str, output_dir: str = "App/build") -> str:
+    ver_dash = version.lstrip("v").replace(".", "-")
+    spec_name = f"Attendance_App_{ver_dash}"
+    spec_path = os.path.join(output_dir, f"{spec_name}.spec")
+    os.makedirs(output_dir, exist_ok=True)
+
+    content = f"""# -*- mode: python ; coding: utf-8 -*-
+
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=[],
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={{}},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='{spec_name}',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='{spec_name}',
+)
+"""
+    with open(spec_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return spec_name
+
+
 def generate_release_notes() -> str:
     result = subprocess.run(
         ["git", "describe", "--tags", "--abbrev=0", "HEAD~1"],
@@ -65,12 +120,17 @@ def generate_release_notes() -> str:
 
 
 if __name__ == "__main__":
-    merge_msg = sys.argv[1] if len(sys.argv) > 1 else "dev/ci"
-    branch = parse_source_branch(merge_msg)
-    latest = get_latest_tag()
-    new_ver = bump_version(latest, branch)
-    update_about_view(new_ver)
-    notes = generate_release_notes()
-    print(new_ver)
-    print("---RELEASE NOTES---")
-    print(notes)
+    if len(sys.argv) > 1 and sys.argv[1] == "--generate-spec":
+        version = sys.argv[2] if len(sys.argv) > 2 else "v0.0.0"
+        spec_name = generate_spec(version)
+        print(spec_name)
+    else:
+        merge_msg = sys.argv[1] if len(sys.argv) > 1 else "dev/ci"
+        branch = parse_source_branch(merge_msg)
+        latest = get_latest_tag()
+        new_ver = bump_version(latest, branch)
+        update_about_view(new_ver)
+        notes = generate_release_notes()
+        print(new_ver)
+        print("---RELEASE NOTES---")
+        print(notes)

@@ -66,59 +66,13 @@ jobs:
           echo "EOF" >> $env:GITHUB_ENV
           echo "New version: $version"
 
-      - name: Build with PyInstaller
+      - name: Generate spec and build
         id: build
         shell: pwsh
         run: |
-          $verDash = "${{ steps.version.outputs.version }}".Replace('.', '-').TrimStart('v')
-          $specName = "Attendance_App_$verDash"
-          $specPath = "App/build/${specName}.spec"
-          $specContent = @"
-# -*- mode: python ; coding: utf-8 -*-
-a = Analysis(
-    ['main.py'],
-    pathex=[],
-    binaries=[],
-    datas=[],
-    hiddenimports=[],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=[],
-    noarchive=False,
-    optimize=0,
-)
-pyz = PYZ(a.pure)
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
-    name='$specName',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='$specName',
-)
-"@
-          Set-Content -Path $specPath -Value $specContent
+          $specName = python scripts/ci_build.py --generate-spec "${{ steps.version.outputs.version }}"
           Push-Location App
-          pyinstaller "build/$specName.spec"
+          pyinstaller "build/${specName}.spec"
           Pop-Location
           echo "specName=$specName" >> $env:GITHUB_OUTPUT
 

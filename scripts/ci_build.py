@@ -120,17 +120,21 @@ def generate_release_notes() -> str:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--generate-spec":
-        version = sys.argv[2] if len(sys.argv) > 2 else "v0.0.0"
-        spec_name = generate_spec(version)
-        print(spec_name)
-    else:
-        merge_msg = sys.argv[1] if len(sys.argv) > 1 else "dev/ci"
-        branch = parse_source_branch(merge_msg)
-        latest = get_latest_tag()
-        new_ver = bump_version(latest, branch)
-        update_about_view(new_ver)
-        notes = generate_release_notes()
-        print(new_ver)
-        print("---RELEASE NOTES---")
-        print(notes)
+    try:
+        if len(sys.argv) > 1 and sys.argv[1] == "--generate-spec":
+            version = sys.argv[2] if len(sys.argv) > 2 else "v0.0.0"
+            spec_name = generate_spec(version)
+            print(spec_name)
+        else:
+            merge_msg = sys.argv[1] if len(sys.argv) > 1 else "dev/ci"
+            branch = parse_source_branch(merge_msg)
+            latest = get_latest_tag()
+            new_ver = bump_version(latest, branch)
+            update_about_view(new_ver)
+            notes = generate_release_notes()
+            print(new_ver)
+            print("---RELEASE NOTES---")
+            print(notes)
+    except Exception as e:
+        print(f"CI_BUILD_ERROR: {e}", file=sys.stderr)
+        sys.exit(1)

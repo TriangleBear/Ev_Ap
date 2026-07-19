@@ -12,5 +12,5 @@ pillow==12.2.0
 Pygments==2.20.0
 six==1.16.0
 tzdata==2026.1
-requests==2.32.4
+requests==2.33.0
 pandas

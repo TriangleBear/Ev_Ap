@@ -78,14 +78,23 @@ jobs:
           echo "EOF" >> $env:GITHUB_ENV
           echo "New version: $version"
 
-      - name: Generate spec and build
+      - name: Build with PyInstaller
         id: build
         shell: pwsh
+        working-directory: App
         run: |
-          $specName = python scripts/ci_build.py --generate-spec "${{ steps.version.outputs.version }}"
-          Push-Location App
-          pyinstaller "build/${specName}.spec"
-          Pop-Location
+          $verDash = "${{ steps.version.outputs.version }}".Replace('.', '-').TrimStart('v-')
+          $specName = "Attendance_App_$verDash"
+          pyinstaller --onedir --name "$specName" `
+            --hidden-import "customtkinter" --hidden-import "CTkMessagebox" `
+            --hidden-import "CTkTable" --hidden-import "pandas" --hidden-import "PIL" `
+            --hidden-import "requests" --hidden-import "icecream" --hidden-import "darkdetect" `
+            --hidden-import "numpy" --hidden-import "packaging" --hidden-import "Pygments" `
+            --hidden-import "asttokens" --hidden-import "colorama" --hidden-import "executing" `
+            --hidden-import "six" --hidden-import "tzdata" --hidden-import "database" `
+            --hidden-import "managers" --hidden-import "views" --hidden-import "theme" `
+            --add-data "assets/icons;assets/icons" `
+            --noconsole main.py
           echo "specName=$specName" >> $env:GITHUB_OUTPUT
 
       - name: Commit version bump and tag

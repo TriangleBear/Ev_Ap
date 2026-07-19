@@ -42,8 +42,8 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Build aborted — tests failed on main`,
-              body: `## Test Failure Report\n\nTests failed after merge to \`main\`.\n\n<details><summary>JUnit output</summary>\n\n\`\`\`\n${results}\n\`\`\`\n\n</details>\n\n_Triggered by commit ${context.sha}_`
+              title: `Build aborted — tests failed on main (${context.sha.substring(0,7)})`,
+              body: `## Test Failure Report\n\nTests failed after merge to \`main\`.\n\n**Commit:** \`${context.sha}\`\n**Date:** ${new Date().toISOString()}\n\n<details><summary>JUnit output</summary>\n\n\`\`\`\n${results}\n\`\`\`\n\n</details>\n\n_Triggered by commit ${context.sha}_`
             });
 
       - name: Fail if tests failed

@@ -40,6 +40,10 @@ The routing happens in `App/database/dblite.py`:
 3. Add the method to `DBActions` in `dblite.py` with the `if db_mode == 'gsheet'` branch.
 4. For SQLite, the existing raw-SQL branch works.
 
+#### Points System
+
+Members have a `points` column in the database. Points are managed through `DBActions.add_points()`, `get_member_points()`, and `redeem_points()` — each implemented for both SQLite and SheetDB backends.
+
 ### UI Threading
 
 RFID scans run in a background thread (`threading.Thread`) to keep the UI responsive:
@@ -58,7 +62,7 @@ pytest TEST/
 pytest ORG-RFID-EVENTS/App/TEST/
 ```
 
-Tests use `tmp_path` + `monkeypatch.chdir` for isolated DB files.
+Tests use `tmp_path` + `monkeypatch.chdir` for isolated DB files. All **7 tests** should pass.
 
 ## CI/CD Pipeline
 
@@ -68,10 +72,11 @@ The repository uses **GitHub Actions** (`.github/workflows/build-release.yml`) f
 
 - **Event:** push/merge to `main`
 - **Runner:** `windows-latest` (builds native Windows `.exe`)
+- **Issue titles** include the commit SHA to avoid duplicates.
 
 ### What happens
 
-1. **Tests** run via pytest. If they fail, a GitHub Issue is auto-created with JUnit output and the pipeline stops.
+1. **Tests** run via pytest. If any fail, a GitHub Issue is created with JUnit output and the pipeline stops.
 2. **Version bump** is determined from the merged branch name:
    - `major/*` → major bump
    - `feature/*` or `feat/*` → minor bump
@@ -82,10 +87,11 @@ The repository uses **GitHub Actions** (`.github/workflows/build-release.yml`) f
 
 ### Helper script
 
-`scripts/ci_build.py` handles version parsing, about_view.py updates, and release note generation. It is called by the workflow but can also be run manually for testing:
+`scripts/ci_build.py` handles version parsing, about_view.py updates, spec generation, and release note generation. Called by the workflow; can also be run manually:
 
 ```bash
 python scripts/ci_build.py "Merge pull request #123 from user/feature/my-feature"
+python scripts/ci_build.py --generate-spec v3.3.2
 ```
 
 ## Google Apps Script Development
@@ -113,4 +119,6 @@ print(config)
 ## Pull Requests
 
 1. Fork → branch → commit → push → PR.
-2. Ensure existing tests still pass.
+2. Ensure all 7 tests still pass (`pytest TEST/`).
+3. Branch names **must** follow CI/CD conventions (`feature/*`, `fix/*`, `dev/*`, `patch/*`, `major/*`).
+4. When merged to `main`, the CI pipeline will build and release automatically.

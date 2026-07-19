@@ -17,7 +17,7 @@ def test_initialize_db_creates_file_and_members_table(tmp_path, monkeypatch):
     # Should create the AHO_MEMBER.db file and Members table
     db.initialize_db()
 
-    db_file = tmp_path / 'AHO_MEMBER.db'
+    db_file = tmp_path / 'Ev_Ap.db'
     assert db_file.exists(), "Database file was not created"
 
     # Verify Members table exists

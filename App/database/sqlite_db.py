@@ -37,7 +37,7 @@ class SQLiteDB:
         conn.close()
 
     def db_exists(self):
-        db_path = 'AHO_MEMBER.db'
+        db_path = 'Ev_Ap.db'
         return os.path.exists(db_path)
 
     def fetch_all_data(self):

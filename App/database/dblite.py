@@ -204,6 +204,51 @@ class DBActions:
             return False
 
     @staticmethod
+    def add_points(rfid, points):
+        db = DBActions.get_db_instance()
+        if db.db_mode == 'gsheet':
+            return db.sheet_db.add_points(rfid, points)
+        try:
+            with db.get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE Members SET points = COALESCE(points, 0) + ? WHERE rfid = ?", (points, rfid))
+                conn.commit()
+            return 0
+        except Exception as e:
+            ic(f"Error adding points: {e}")
+            return -1
+
+    @staticmethod
+    def get_member_points(rfid):
+        db = DBActions.get_db_instance()
+        if db.db_mode == 'gsheet':
+            return db.sheet_db.get_member_points(rfid)
+        try:
+            with db.get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT COALESCE(points, 0) AS points FROM Members WHERE rfid = ?", (rfid,))
+                result = cursor.fetchone()
+            return result['points'] if result else 0
+        except Exception as e:
+            ic(f"Error getting points: {e}")
+            return 0
+
+    @staticmethod
+    def redeem_points(rfid, points):
+        db = DBActions.get_db_instance()
+        if db.db_mode == 'gsheet':
+            return db.sheet_db.redeem_points(rfid, points)
+        try:
+            with db.get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE Members SET points = COALESCE(points, 0) - ? WHERE rfid = ? AND COALESCE(points, 0) >= ?", (points, rfid, points))
+                conn.commit()
+            return 0
+        except Exception as e:
+            ic(f"Error redeeming points: {e}")
+            return -1
+
+    @staticmethod
     def delete_event_table(table_name):
         db = DBActions.get_db_instance()
         if db.db_mode == 'gsheet':

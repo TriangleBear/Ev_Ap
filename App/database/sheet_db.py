@@ -122,6 +122,20 @@ class SheetDB:
             return result['data'].get('name')
         return None
 
+    def add_points(self, rfid, points):
+        result = self._post('addPoints', {'rfid': rfid, 'points': points})
+        return 0 if result.get('success') else -1
+
+    def get_member_points(self, rfid):
+        result = self._post('getMember', {'rfid': rfid})
+        if result.get('success') and result.get('data'):
+            return result['data'].get('points', 0)
+        return 0
+
+    def redeem_points(self, rfid, points):
+        result = self._post('redeemPoints', {'rfid': rfid, 'points': points})
+        return 0 if result.get('success') else -1
+
     def delete_event(self, event_name):
         result = self._post('deleteEvent', {'eventName': event_name})
         return 0 if result.get('success') else -1

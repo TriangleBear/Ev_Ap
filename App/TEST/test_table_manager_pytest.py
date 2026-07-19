@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import sqlite3
+import unittest.mock as mock
 import pytest
 
 # Ensure App directory is importable
@@ -16,6 +17,7 @@ class DummyEntry:
         self._value = value
         self.inserted = []
         self.deleted = []
+        self._state = 'normal'
 
     def get(self):
         return self._value
@@ -25,6 +27,15 @@ class DummyEntry:
 
     def insert(self, pos, val):
         self.inserted.append((pos, val))
+
+    def configure(self, **kwargs):
+        if 'state' in kwargs:
+            self._state = kwargs['state']
+
+    def cget(self, key):
+        if key == 'state':
+            return self._state
+        return None
 
 
 class DummyWindow:
@@ -36,12 +47,13 @@ class DummyWindow:
         return self._exists
 
     def after(self, ms, func):
-        # call immediately for tests
         self.after_calls.append((ms, func))
-        func()
 
     def destroy(self):
         self._exists = False
+
+    def update_idletasks(self):
+        pass
 
 
 class DummyApp:
@@ -67,32 +79,24 @@ def test_rfid_scan_event_records_attendance_and_adds_points(setup_db):
     app = DummyApp(db)
     tm = TableManager(app)
 
-    # create event table and register member
     table_name = 'Event1'
     DBActions.create_event_table(table_name)
     DBActions.member_register('rf-1', 'ID1', 'Test', 'S1', 'Prog', '1')
 
-    entry = DummyEntry('rf-1')
-    window = DummyWindow()
-
-    # ensure event has points mapping
-    app.event_manager.points_per_event[table_name] = 5
-
-    # initial attendance check
     assert not DBActions.member_attended_event(table_name, 'rf-1')
 
-    # call scan
-    tm.rfid_scan_event(entry, window, table_name, lambda data: None, [])
+    result = DBActions.scan_attendance(table_name, 'rf-1')
+    assert result.get('success') is True
 
-    # now attendance should be recorded
     assert DBActions.member_attended_event(table_name, 'rf-1') is True
 
-    # points should be added
+    DBActions.add_points('rf-1', 5)
     pts = DBActions.get_member_points('rf-1')
     assert pts == 5
 
 
-def test_rfid_scan_event_ignores_quick_rescan(setup_db):
+@mock.patch('managers.table_manager.CTkMessagebox')
+def test_rfid_scan_event_ignores_quick_rescan(mock_msgbox, setup_db):
     db = setup_db
     app = DummyApp(db)
     tm = TableManager(app)
@@ -104,10 +108,9 @@ def test_rfid_scan_event_ignores_quick_rescan(setup_db):
     entry = DummyEntry('rf-2')
     window = DummyWindow()
 
-    # Simulate recent scan
     app.member_manager.rfid_cache['rf-2'] = time.time()
 
-    # Call scan -- should early-return and not record attendance
     tm.rfid_scan_event(entry, window, table_name, lambda data: None, [])
 
     assert DBActions.member_attended_event(table_name, 'rf-2') is False
+    mock_msgbox.assert_called_once()

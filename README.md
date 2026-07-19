@@ -8,6 +8,7 @@
 - **Event Management:** Create events — each event gets its own Google Sheet file (in GS mode) or a SQLite table (in local mode).
 - **Attendance Tracking:** Scan RFID cards to mark attendance with 15-second dedup protection.
 - **Background Scanning:** RFID scans run in a background thread so the UI stays responsive with a loading indicator.
+- **Points System:** Award and redeem points per event; automatically added on scan.
 - **Dual Database Backend:** Switch between local SQLite and Google Sheets in Settings.
 - **Data Export:** Export attendance data to CSV or Excel.
 
@@ -72,21 +73,27 @@ The project uses **GitHub Actions** for continuous integration and delivery. On 
 ## Project Structure
 
 ```
-ORG-RFID-EVENTS/App/
-├── main.py              # Entrypoint
-├── rfid_app.py          # MainApp — wires DB, managers, views
-├── database/
-│   ├── dblite.py        # DBActions (static facade) + Database wrapper (dual-backend)
-│   ├── sqlite_db.py     # Local SQLite connection / schema
-│   ├── sheet_db.py      # Google Sheets API client (HTTP → Google Apps Script)
-│   ├── config.py        # ev_ap_config.json read/write
-│   └── gsheet_api.gs    # Google Apps Script source — deploy as Web App
-├── managers/
-│   ├── event_manager.py # Event creation flow
-│   ├── member_manager.py # Member registration flow
-│   └── table_manager.py  # Event table UI, threaded RFID scan, export
-├── views/               # Lazy-loaded CustomTkinter views (7 views)
-└── TEST/                # pytest tests
+ORG-RFID-EVENTS/
+├── .github/workflows/
+│   └── build-release.yml   # CI/CD pipeline (GitHub Actions)
+├── scripts/
+│   └── ci_build.py         # Version bump & spec generation helper
+├── App/
+│   ├── main.py              # Entrypoint
+│   ├── rfid_app.py          # MainApp — wires DB, managers, views
+│   ├── database/
+│   │   ├── dblite.py        # DBActions (static facade) + Database wrapper (dual-backend)
+│   │   ├── sqlite_db.py     # Local SQLite connection / schema
+│   │   ├── sheet_db.py      # Google Sheets API client (HTTP → Google Apps Script)
+│   │   ├── config.py        # ev_ap_config.json read/write
+│   │   └── gsheet_api.gs    # Google Apps Script source — deploy as Web App
+│   ├── managers/
+│   │   ├── event_manager.py # Event creation flow
+│   │   ├── member_manager.py # Member registration flow
+│   │   └── table_manager.py  # Event table UI, threaded RFID scan, export
+│   ├── views/               # Lazy-loaded CustomTkinter views (7 views)
+│   └── TEST/                # pytest tests
+└── requirements.txt
 ```
 
 ## License

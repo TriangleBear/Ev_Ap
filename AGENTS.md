@@ -13,21 +13,27 @@ Virtual env: `.venv\Scripts\activate` (Windows).
 ## Project structure
 
 ```
-ORG-RFID-EVENTS/App/
-├── main.py              # Entrypoint — imports and runs MainApp
-├── rfid_app.py          # MainApp: wires DB, managers, views
-├── database/
-│   ├── dblite.py        # DBActions (static facade) + Database wrapper (dual-backend)
-│   ├── sqlite_db.py     # Raw SQLite connection / schema
-│   ├── sheet_db.py      # Google Sheets API client (HTTP → Google Apps Script)
-│   ├── config.py        # ev_ap_config.json read/write (db_mode, gsheet_api_url)
-│   └── gsheet_api.gs    # Google Apps Script source — deploy as Web App
-├── managers/
-│   ├── event_manager.py # Event creation flow
-│   ├── member_manager.py # Member registration flow
-│   └── table_manager.py # Event table UI, RFID scan, export
-├── views/               # Lazy-loaded CustomTkinter views (7 views)
-└── TEST/                # pytest tests
+ORG-RFID-EVENTS/
+├── .github/workflows/
+│   └── build-release.yml   # CI/CD — tests, build, release on merge to main
+├── scripts/
+│   └── ci_build.py         # Version bump, spec gen, release notes
+├── App/
+│   ├── main.py              # Entrypoint — imports and runs MainApp
+│   ├── rfid_app.py          # MainApp: wires DB, managers, views
+│   ├── database/
+│   │   ├── dblite.py        # DBActions (static facade) + Database wrapper (dual-backend)
+│   │   ├── sqlite_db.py     # Raw SQLite connection / schema
+│   │   ├── sheet_db.py      # Google Sheets API client (HTTP → Google Apps Script)
+│   │   ├── config.py        # ev_ap_config.json read/write (db_mode, gsheet_api_url)
+│   │   └── gsheet_api.gs    # Google Apps Script source — deploy as Web App
+│   ├── managers/
+│   │   ├── event_manager.py # Event creation flow
+│   │   ├── member_manager.py # Member registration flow
+│   │   └── table_manager.py # Event table UI, RFID scan, export
+│   ├── views/               # Lazy-loaded CustomTkinter views (7 views)
+│   └── TEST/                # pytest tests
+└── requirements.txt
 ```
 
 ## Key architecture facts
@@ -39,8 +45,7 @@ ORG-RFID-EVENTS/App/
   - Deleting an event moves its spreadsheet to trash and removes the registry entry.
 - **Config file**: `ev_ap_config.json` is auto-created in the working directory. Fields: `db_mode` ("sqlite"\|"gsheet"), `gsheet_api_url`.
 - **Views are lazy-loaded**: imported and initialized only on first navigation via `MainApp.init_view()`.
-- **DB filename mismatch**: `sqlite_db.py` creates/connects to `Ev_Ap.db` but `db_exists()` checks for `AHO_MEMBER.db`. Be aware of dual DB files.
-- **Points system in inconsistent state**: `SQLiteDB.initialize_db()` still adds a `points` column, but `DBActions.add_points()`, `get_member_points()`, `redeem_points()` are **commented out**. The test `test_table_manager_pytest.py` still calls `get_member_points()` and will fail.
+- **Points system**: `DBActions.add_points()`, `get_member_points()`, `redeem_points()` are implemented for both SQLite and SheetDB backends. `SQLiteDB.initialize_db()` adds a `points` column automatically.
 - **15-second RFID dedup**: `member_manager.rfid_cache` prevents re-scanning the same tag within 15 seconds.
 - **Threaded RFID scan**: `DBActions.scan_attendance()` batches member_exists + check_attended + record into one API call (GS mode) and runs in a background thread with a loading spinner in the UI.
 
@@ -57,11 +62,15 @@ pytest ORG-RFID-EVENTS/App/TEST/
 - Tests use `tmp_path` + `monkeypatch.chdir(tmp_path)` for DB isolation.
 - Tests append `..` to `sys.path` to import from the App package — may need `cd App` first.
 - `test_table_manager_pytest.py` uses `DummyApp`/`DummyWindow`/`DummyEntry` mocks.
+- 7 tests total across 3 files; all should pass.
 
 ## Gotchas
 
 - **Security**: `.vscode/settings.json` contains live MySQL credentials (Aiven Cloud) — do not commit.
-- **`.gitignore`** is just `*` — everything is ignored by default. Add explicit `!` rules for tracked files.
+- **`.gitignore`** is a standard Python gitignore (not just `*`). New files in `.github/workflows/` and `scripts/` are tracked normally.
 - **IceCream debug**: `ic()` calls are used throughout for debugging output.
 - **Appearance modes**: Light/Dark/System via `customtkinter`.
 - **Export**: CSV/Excel via `pandas` with `filedialog.asksaveasfilename`.
+- **CI/CD**: GitHub Actions workflow at `.github/workflows/build-release.yml`. Triggered on push to `main`. Runs tests, bumps version per branch name, builds PyInstaller `.exe`, creates GitHub Release.
+- **Version bump rules**: `major/*` → major, `feature/*` or `feat/*` → minor, anything else (`dev/*`, `fix/*`, `patch/*`) → patch.
+- **Issue titles** on test failure include the commit SHA to avoid duplicates.

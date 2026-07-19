@@ -1,7 +1,3 @@
-Here's a draft for the `CONTRIBUTE.md` file to guide potential contributors on how to get involved with the "Event Attendance" project.
-
----
-
 # Contributing to Ev_Ap
 
 Thank you for your interest in contributing to **Ev_Ap**! We welcome and appreciate contributions from the community. By following the guidelines below, you'll help make the project better for everyone.

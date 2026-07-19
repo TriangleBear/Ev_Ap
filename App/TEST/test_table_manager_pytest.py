@@ -7,7 +7,7 @@ import pytest
 # Ensure App directory is importable
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from dblite import Database, DBActions
+from database.dblite import Database, DBActions
 import table_manager
 from table_manager import TableManager
 

@@ -6,7 +6,7 @@ import pytest
 # Ensure the App directory is on sys.path so imports work during pytest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sqlite_db import SQLiteDB
+from database.sqlite_db import SQLiteDB
 
 
 def test_initialize_db_creates_file_and_members_table(tmp_path, monkeypatch):

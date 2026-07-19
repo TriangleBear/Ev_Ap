@@ -85,7 +85,7 @@ jobs:
         run: |
           $verDash = "${{ steps.version.outputs.version }}".Replace('.', '-').TrimStart('v-')
           $specName = "Attendance_App_$verDash"
-          pyinstaller --onefile --name "$specName" `
+          pyinstaller --onedir --name "$specName" `
             --hidden-import "customtkinter" --hidden-import "CTkMessagebox" `
             --hidden-import "CTkTable" --hidden-import "pandas" --hidden-import "PIL" `
             --hidden-import "requests" --hidden-import "icecream" --hidden-import "darkdetect" `
@@ -114,5 +114,5 @@ jobs:
           tag: ${{ steps.version.outputs.version }}
           name: ${{ steps.version.outputs.version }}
           body: ${{ env.RELEASE_NOTES }}
-          artifacts: "App/dist/${{ steps.build.outputs.specName }}.exe"
+          artifacts: "App/dist/${{ steps.build.outputs.specName }}/${{ steps.build.outputs.specName }}.exe"
           token: ${{ secrets.GITHUB_TOKEN }}

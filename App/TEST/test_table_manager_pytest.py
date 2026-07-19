@@ -8,8 +8,7 @@ import pytest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from database.dblite import Database, DBActions
-import table_manager
-from table_manager import TableManager
+from managers.table_manager import TableManager
 
 
 class DummyEntry:

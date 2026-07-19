@@ -13,13 +13,18 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Install VC++ redistributable
+        run: |
+          curl.exe -sL -o vc_redist.x64.exe "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+          .\vc_redist.x64.exe /quiet /norestart
 
       - name: Install dependencies
         run: |

@@ -55,11 +55,18 @@ jobs:
         shell: pwsh
         run: |
           $mergeMsg = git log -1 --format='%s'
-          $output = python scripts/ci_build.py "$mergeMsg"
+          $raw = python scripts/ci_build.py "$mergeMsg"
+          if (-not $?) { exit 1 }
+          if ($raw -is [array]) { $output = $raw -join "`n" } else { $output = "$raw" }
           $lines = $output -split "`n"
           $version = $lines[0]
-          $idx = $output.IndexOf("---RELEASE NOTES---")
-          $notes = $output.Substring($idx + "---RELEASE NOTES---".Length).Trim()
+          $marker = "---RELEASE NOTES---"
+          $idx = $output.IndexOf($marker)
+          if ($idx -ge 0) {
+            $notes = $output.Substring($idx + $marker.Length).Trim()
+          } else {
+            $notes = $output
+          }
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "RELEASE_NOTES<<EOF" >> $env:GITHUB_ENV
           echo "$notes" >> $env:GITHUB_ENV

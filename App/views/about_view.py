@@ -24,7 +24,7 @@ class AboutView(CTk.CTkFrame):
         creator_name_label.pack(pady=3)
         creator_name_label.bind("<Button-1>", lambda e: self.open_url("https://github.com/TriangleBear"))
 
-        version_label = CTk.CTkLabel(self, text="Version: dev_3.3.2")
+        version_label = CTk.CTkLabel(self, text="Version: 3.3.2")
         version_label.pack(pady=10)
 
         close_button = CTk.CTkButton(self, text="Close", command=self.close)

@@ -6,7 +6,7 @@ import pytest
 # Ensure the App directory is on sys.path so imports work during pytest
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from dblite import Database, DBActions
+from database.dblite import Database, DBActions
 
 
 def setup_db(tmp_path, monkeypatch):

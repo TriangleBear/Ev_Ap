@@ -14,9 +14,37 @@ def get_latest_tag() -> str:
     return result.stdout.strip() if result.returncode == 0 else "v0.0.0"
 
 
-def parse_source_branch(merge_message: str) -> str:
-    m = re.search(r"from\s+\S+/(\S+)", merge_message)
-    return m.group(1) if m else "dev/unknown"
+VERSION_IN_BRANCH_RE = re.compile(r"^(\w+)/(\d+\.\d+\.\d+)$")
+
+
+def extract_version_from_title(pr_title: str) -> str | None:
+    m = re.search(r"v?(\d+\.\d+\.\d+)", pr_title)
+    return m.group(1) if m else None
+
+
+def parse_source_branch(merge_message_full: str) -> tuple[str, str | None]:
+    lines = merge_message_full.strip().split("\n")
+    first_line = lines[0] if lines else ""
+
+    m = re.search(r"from\s+\S+/(\S+)", first_line)
+    branch = m.group(1) if m else "dev/unknown"
+
+    pr_title = ""
+    for line in lines[1:]:
+        stripped = line.strip()
+        if stripped:
+            pr_title = stripped
+            break
+
+    version = extract_version_from_title(pr_title)
+    if version:
+        return branch, version
+
+    vm = VERSION_IN_BRANCH_RE.match(branch)
+    if vm:
+        return vm.group(1), vm.group(2)
+
+    return branch, None
 
 
 def bump_version(tag: str, branch: str) -> str:
@@ -127,9 +155,9 @@ if __name__ == "__main__":
             print(spec_name)
         else:
             merge_msg = sys.argv[1] if len(sys.argv) > 1 else "dev/ci"
-            branch = parse_source_branch(merge_msg)
-            latest = get_latest_tag()
-            new_ver = bump_version(latest, branch)
+            branch, branch_version = parse_source_branch(merge_msg)
+            base_ver = branch_version if branch_version else get_latest_tag()
+            new_ver = bump_version(base_ver, branch)
             update_about_view(new_ver)
             notes = generate_release_notes()
             print(new_ver)

@@ -1,0 +1,52 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [latest/*]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        id: tests
+        continue-on-error: true
+        working-directory: App
+        run: pytest TEST/ --junitxml=test-results.xml
+
+      - name: Create issue on test failure
+        if: steps.tests.outcome == 'failure'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const results = fs.readFileSync('App/test-results.xml', 'utf8').substring(0, 10000);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Test failure — PR #${context.issue.number} (${{ github.head_ref }})`,
+              body: `## Test Failure Report\n\nTests failed for PR #${context.issue.number}.\n\n**Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`\n**Commit:** \`${context.sha.substring(0,7)}\`\n\n<details><summary>JUnit output</summary>\n\n\`\`\`\n${results}\n\`\`\`\n\n</details>`
+            });
+
+      - name: Fail if tests failed
+        if: steps.tests.outcome == 'failure'
+        run: exit 1

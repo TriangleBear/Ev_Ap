@@ -15,7 +15,8 @@ Virtual env: `.venv\Scripts\activate` (Windows).
 ```
 ORG-RFID-EVENTS/
 ├── .github/workflows/
-│   └── build-release.yml   # CI/CD — tests, build, release on merge to main
+│   ├── build-release.yml   # CI/CD — tests, build, release on merge to main
+│   └── pr-check.yml        # CI/CD — tests on PR to latest/*
 ├── scripts/
 │   └── ci_build.py         # Version bump, spec gen, release notes
 ├── App/
@@ -71,6 +72,39 @@ pytest ORG-RFID-EVENTS/App/TEST/
 - **IceCream debug**: `ic()` calls are used throughout for debugging output.
 - **Appearance modes**: Light/Dark/System via `customtkinter`.
 - **Export**: CSV/Excel via `pandas` with `filedialog.asksaveasfilename`.
-- **CI/CD**: GitHub Actions workflow at `.github/workflows/build-release.yml`. Triggered on push to `main`. Runs tests, bumps version per branch name, builds PyInstaller `.exe`, creates GitHub Release.
-- **Version bump rules**: `major/*` → major, `feature/*` or `feat/*` → minor, anything else (`dev/*`, `fix/*`, `patch/*`) → patch.
-- **Issue titles** on test failure include the commit SHA to avoid duplicates.
+
+## Branch hierarchy
+
+```
+lower:  patch/* , fix/* , feature/*   (deleted once merged to mid)
+mid:    dev/* , latest/*               (version lives in dev/* branch name)
+high:   main                           (triggers build + release on merge)
+```
+
+- **Lower** branches (`patch/*`, `fix/*`, `feature/*`) are temporary — deleted once merged into `dev/*` or `latest/*`.
+- **Mid** branches (`dev/*`, `latest/*`) hold the version number in the branch name (e.g. `dev/1.2.3`). `latest/*` is the staging/pre-release branch.
+- **High** (`main`) is production. When `latest/*` is approved and merged to `main`, the full build + release pipeline runs.
+
+## CI/CD Workflows
+
+### pr-check.yml — PR validation (dev/* → latest/*)
+
+Triggered on **pull requests targeting `latest/*`**. Runs tests only:
+- If tests pass, the PR status check passes (no auto-merge).
+- If tests fail, a GitHub Issue is created with the JUnit output.
+
+### build-release.yml — Release (push to main)
+
+Triggered on **push to `main`** (typically from merging `latest/*`). Runs tests, builds, and releases.
+
+**Version detection** (in `scripts/ci_build.py`), in priority order:
+1. **PR title in the merge commit body** — e.g. merging a PR titled `Release v1.0.1` → extracts `1.0.1`
+2. **Branch name version** — e.g. `dev/1.0.1` in the merge branch line → extracts `1.0.1`
+3. **Latest git tag** — fallback if neither is found
+
+**Bump rules** (applied after selecting the base version):
+- `major/*` → **major** bump (1.0.0 → 2.0.0)
+- `feature/*` or `feat/*` → **minor** bump (1.0.0 → 1.1.0)
+- `dev/*`, `fix/*`, `patch/*`, `latest`, or anything else → **patch** bump (1.0.0 → 1.0.1)
+
+**Atomic release**: Tag is created by `ncipollo/release-action` (via `commit: ${{ github.sha }}`) at the same time as the release. No separate `git tag`/`git push origin <tag>` step. This avoids orphan tags when the release step fails — re-running the workflow will produce the **same version** (since no tag was pushed), and the release creation will succeed.

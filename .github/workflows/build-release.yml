@@ -59,7 +59,7 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $mergeMsg = git log -1 --format='%s'
+          $mergeMsg = git log -1 --format='%B'
           $raw = python scripts/ci_build.py "$mergeMsg"
           if (-not $?) { exit 1 }
           if ($raw -is [array]) { $output = $raw -join "`n" } else { $output = "$raw" }
@@ -97,16 +97,14 @@ jobs:
             --noconsole main.py
           echo "specName=$specName" >> $env:GITHUB_OUTPUT
 
-      - name: Commit version bump and tag
+      - name: Commit version bump
         shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add App/views/about_view.py
           git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
-          git tag "${{ steps.version.outputs.version }}"
           git push origin main
-          git push origin "${{ steps.version.outputs.version }}"
 
       - name: Create Release
         uses: ncipollo/release-action@v1.21.0
@@ -116,3 +114,4 @@ jobs:
           body: ${{ env.RELEASE_NOTES }}
           artifacts: "App/dist/${{ steps.build.outputs.specName }}.exe"
           token: ${{ secrets.GITHUB_TOKEN }}
+          commit: ${{ github.sha }}

@@ -1,5 +1,20 @@
 # Ev_Ap
 
+> ### ⚠️ This application has been rewritten in Rust
+>
+> The new version lives in **[TriangleBear/ev-ap-rust](https://github.com/TriangleBear/ev-ap-rust)** —
+> same features, same database, same Google Sheets backend, but as a single
+> 8 MB executable with no Python installation needed.
+>
+> **This repository is kept as the read-only reference** for the port. Bug
+> reports and features for the new version belong in the
+> [Rust repository](https://github.com/TriangleBear/ev-ap-rust/issues).
+>
+> The migration is documented in
+> [`docs/RUST_MIGRATION.md`](docs/RUST_MIGRATION.md) and the result of the
+> parity check in the new repo's
+> [`docs/PARITY_CHECKLIST.md`](https://github.com/TriangleBear/ev-ap-rust/blob/main/docs/PARITY_CHECKLIST.md).
+
 **Ev_Ap (Event Attendance)** is a desktop application for managing event attendance via RFID scanning. It supports a **dual-backend** architecture — local **SQLite** or cloud **Google Sheets** via a Google Apps Script API.
 
 ## Features
